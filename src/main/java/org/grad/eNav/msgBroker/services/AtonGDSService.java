@@ -19,10 +19,18 @@ package org.grad.eNav.msgBroker.services;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
+import org.geotools.data.DataUtilities;
+import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureStore;
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
+import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
+import org.grad.eNav.msgBroker.exceptions.ValidationException;
+import org.grad.eNav.msgBroker.models.AtonNode;
 import org.grad.eNav.msgBroker.models.GeomesaAton;
 import org.grad.eNav.msgBroker.utils.AtonMessageHandler;
 import org.grad.eNav.msgBroker.utils.AtonGDSListener;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,10 +43,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,7 +100,7 @@ public class AtonGDSService {
     private AtonMessageHandler atonMessageHandler;
 
     // Service Variables
-    private DataStore consumer;
+    private DataStore producer;
     private List<AtonGDSListener> dsListeners;
 
     /**
@@ -115,13 +120,19 @@ public class AtonGDSService {
 
         // Create the producer
         try {
-            this.consumer = this.createDataStore(params);
+            this.producer = this.createDataStore(params);
+
+            // Create the AtoN Schema
+            if(this.producer != null) {
+                GeomesaAton gmAton = new GeomesaAton();
+                this.createSchema(this.producer, gmAton.getSimpleFeatureType());
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
 
         // Create the AtoN Schema
-        if(this.consumer == null) {
+        if(this.producer == null) {
             log.error("Unable to connect to data store");
             return;
         }
@@ -136,7 +147,7 @@ public class AtonGDSService {
                     AtonGDSListener dsListener = null;
                     try {
                         dsListener = this.applicationContext.getBean(AtonGDSListener.class);
-                        dsListener.init(this.consumer,
+                        dsListener.init(this.producer,
                                         new GeomesaAton().getSimpleFeatureType(),
                                         listener.getAddress(),
                                         listener.getPort(),
@@ -159,7 +170,34 @@ public class AtonGDSService {
         log.info("Geomesa Data Store is shutting down...");
         this.dsListeners.forEach(AtonGDSListener::destroy);
         this.atonDataChannel.destroy();
-        this.consumer.dispose();
+        this.producer.dispose();
+    }
+
+    /**
+     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
+     * this only supports the Kafka Message Streams.
+     *
+     * @param aton the AtoN node to be pushed into the datastore
+     */
+    public void pushAton(AtonNode aton) {
+        // We need a valid producer to push the AtoN to
+        if(this.producer == null) {
+            throw new ValidationException("No valid Geomesa Data Store producer detected.");
+        }
+
+        // We need a valid AtoN so that is it published
+        if(aton == null) {
+            throw new ValidationException("A valid AtoN is required for the publication.");
+        }
+
+        // Translate the AtoNs to the Geomesa simple features
+        GeomesaAton gmAton = new GeomesaAton();
+        try {
+            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(aton)));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            throw new InternalServerErrorException(e.getMessage());
+        }
     }
 
     /**
@@ -179,4 +217,35 @@ public class AtonGDSService {
         log.info("GeoMesa Data Store created");
         return producer;
     }
+
+    /**
+     * Creates a new schema in the provided data store. The schema is pretty
+     * much like the table in a database that will accept the row data.
+     *
+     * @param datastore the datastore to create the schema into
+     * @param sft the simple feature type i.e. the schema description
+     * @throws IOException
+     */
+    private void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
+        log.info("Creating schema: " + DataUtilities.encodeType(sft));
+        // we only need to do the once - however, calling it repeatedly is a no-op
+        datastore.createSchema(sft);
+        log.info("Schema created");
+    }
+
+    /**
+     * A generic function that writes the provided data into the datastore
+     * schema, based on the provided simple feature type. The list of features
+     * are generic points of interest that will be send to the data store.
+     *
+     * @param datastore the datastore to write the feature into
+     * @param sft the simple feature type
+     * @param features the list of features to be writter to the data store
+     * @throws IOException
+     */
+    private void writeFeatures(DataStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
+        SimpleFeatureStore producerFS = (SimpleFeatureStore) datastore.getFeatureSource(sft.getTypeName());
+        producerFS.addFeatures(new ListFeatureCollection(sft, features));
+    }
+
 }

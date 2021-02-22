@@ -17,7 +17,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>e-Navigation VDES Controller</title>
+    <title>e-Navigation Message Broker</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" >
     <link rel="stylesheet" th:href="@{webjars/font-awesome/5.11.2/css/all.min.css}"/>
     <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
@@ -34,7 +34,7 @@
         </h2>
     </noscript>
     <nav class="navbar navbar-dark bg-dark">
-        <span class="navbar-brand mb-0 h1">e-Nav VDES Controller</span>
+        <span class="navbar-brand mb-0 h1">e-Nav Message Broker</span>
         <ul class="nav navbar-nav navbar-right">
             <li class="nav-item" sec:authorize="!isAuthenticated()">
                 <a class="nav-link" href="/login" th:href="@{/login}">
@@ -55,7 +55,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <p class="m-2">Please sign-in to review the incoming AtoN messages.</p>
+                    <p class="m-2">Please sign-in to review the incoming AtoN publications.</p>
                 </div>
                 <div class="row d-flex justify-content-center">
                     <div class="btn btn-primary text-">
@@ -68,7 +68,7 @@
         </div>
         <div class="card" sec:authorize="isAuthenticated()">
             <div class="card-header">
-                <h2>AtoN Message Board</h2>
+                <h2>AtoN Publications Board</h2>
             </div>
             <div class="card-body">
                 <div class="row">
