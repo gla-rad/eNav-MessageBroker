@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.config;
 
+import org.grad.eNav.msgBroker.models.PublicationType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -27,7 +28,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * The WebSocketConfig Class
  *
  * This configuration class sets up the WebSocket for this app where remote
- * clients can monitor the incoming AtoN data.
+ * clients can monitor the incoming publish-subscribe data.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
@@ -38,31 +39,28 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     /**
      * The WebSocket Name
      */
-    @Value("${gla.rad.vdes-ctlr.web-socket.name:vdes-ctrl-websocket}")
+    @Value("${gla.rad.msg-broker.web-socket.name:msg-broker-websocket}")
     private String webSocketName;
 
     /**
      * The General Destination Prefix
      */
-    @Value("${gla.rad.vdes-ctlr.web-socket.prefix:topic}")
+    @Value("${gla.rad.msg-broker.web-socket.prefix:topic}")
     private String prefix;
 
     /**
-     * The VDES Controller Data Endpoint of the WebSocket
-     */
-    @Value("${gla.rad.vdes-ctlr.web-socket.aton-data-endpoint:atons}")
-    private String atonDataEndpoint;
-
-    /**
      * This function implements the basic registration for our WebSocket message
-     * broker. It basically set's the destination prefix and all endpoints.
+     * broker. It basically set's the destination prefix and all endpoints as
+     * specified in the PublicationType enum.
      *
      * @param config    The message broker configuration
      */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/"+ this.prefix);
-        config.setApplicationDestinationPrefixes("/"+ this.atonDataEndpoint);
+        for(PublicationType type: PublicationType.values()) {
+            config.setApplicationDestinationPrefixes("/"+ type.getType());
+        }
     }
 
     /**
@@ -73,7 +71,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/" + this.webSocketName).setAllowedOrigins("*").withSockJS();
+        registry.addEndpoint("/" + this.webSocketName)
+                .setAllowedOrigins("*")
+                .withSockJS();
     }
 
 }

@@ -44,7 +44,7 @@ public class PubSubChannelConfig {
      * @return The publish subscribe message channel
      */
     @Bean
-    public PublishSubscribeChannel atonDataChannel() {
+    public PublishSubscribeChannel atonPublishChannel() {
         PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel();
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;

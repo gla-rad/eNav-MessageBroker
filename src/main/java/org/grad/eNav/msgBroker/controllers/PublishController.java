@@ -2,14 +2,23 @@ package org.grad.eNav.msgBroker.controllers;
 
 import org.grad.eNav.msgBroker.feign.NiordClient;
 import org.grad.eNav.msgBroker.models.AtonNode;
+import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.services.AtonGDSService;
+import org.opengis.feature.simple.SimpleFeature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Optional;
 
 /**
  * The AtoN Controller.
@@ -31,6 +40,13 @@ public class PublishController {
     private NiordClient niordClient;
 
     /**
+     * The AtoN Data Channel to publish the incoming data to.
+     */
+    @Autowired
+    @Qualifier("atonPublishChannel")
+    private PublishSubscribeChannel atonPublishChannel;
+
+    /**
      * The AtoN Geomesa Data Store Service.
      */
     @Autowired
@@ -45,8 +61,16 @@ public class PublishController {
      */
     @PostMapping("/atons")
     public ResponseEntity<AtonNode> publishAton(@RequestBody AtonNode aton) {
+        // Publish the message
+        Optional.ofNullable(aton)
+                .map(MessageBuilder::withPayload)
+                .map(builder -> {
+                    builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
+                    return builder;
+                })
+                .map(MessageBuilder::build)
+                .map(this.atonPublishChannel::send);
         // If the publication was successful, return OK
-        this.atonGDSService.pushAton(aton);
         return new ResponseEntity<>(aton, HttpStatus.OK);
     }
 }

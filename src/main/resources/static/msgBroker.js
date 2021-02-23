@@ -25,18 +25,18 @@ function setConnected(connected) {
 function connect() {
     var endpoint = $( "#endpoint option:selected" ).text();
     if(stompClient == null) {
-        var socket = new SockJS('/vdes-ctrl-websocket');
+        var socket = new SockJS('/msg-broker-websocket');
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             setConnected(true);
             stompClient.subscribe('/topic/' + endpoint, function (msg) {
-                showMessage(JSON.parse(msg.body));
+                showMessage(endpoint, JSON.parse(msg.body));
             });
         });
     } else {
         setConnected(true);
         stompClient.subscribe('/topic/' + endpoint, function (msg) {
-            showMessage(JSON.parse(msg.body));
+            showMessage(endpoint, JSON.parse(msg.body));
         });
     }
 }
@@ -63,17 +63,30 @@ function disconnect() {
  * If more messages than the maximum number are receives, it will clear out
  * the table and start over.
  */
-function showMessage(aton) {
+function showMessage(endpoint, msg) {
     // For too many messages clear out the incoming table
     if(noOfMessages >= maxNoOfMessages) {
         $("#incoming").html("");
         noOfMessages = 0;
     }
-    // And add the entry to the table
-    $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.tags["atonUID"]
-        + "</td><td class=\"col-4\">" + aton.timestamp + "</td>"
-        + "</td><td class=\"col-2\">" + aton.lat + "</td>"
-        + "</td><td class=\"col-2\">" + aton.lon + "</td></tr>");
+    // Handle Atons
+    if(endpoint === "aton") {
+        var aton = msg;
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.tags["seamark:ref"]
+            + "</td><td class=\"col-4\">" + aton.timestamp + "</td>"
+            + "</td><td class=\"col-2\">" + aton.lat + "</td>"
+            + "</td><td class=\"col-2\">" + aton.lon + "</td></tr>");
+    }
+    // For any other type
+    else {
+        var unknown = msg;
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + "unknown"
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td class=\"col-2\">" + "N/A" + "</td>"
+            + "</td><td class=\"col-2\">" + "N/A" + "</td></tr>");
+    }
     noOfMessages++;
 }
 

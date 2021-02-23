@@ -32,7 +32,7 @@ import java.util.List;
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
 @Component
-@ConfigurationProperties("gla.rad.vdes-ctrl.aton")
+@ConfigurationProperties("gla.rad.msg-broker.aton")
 public class AtonListenerProperties {
 
     // Class Variables

@@ -27,8 +27,7 @@ import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
 import org.grad.eNav.msgBroker.models.AtonNode;
 import org.grad.eNav.msgBroker.models.GeomesaAton;
-import org.grad.eNav.msgBroker.utils.AtonMessageHandler;
-import org.grad.eNav.msgBroker.utils.AtonGDSListener;
+import org.grad.eNav.msgBroker.models.PublicationType;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +37,16 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHandler;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * The AtoN Geomesa Data Store Service.
@@ -54,7 +56,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-public class AtonGDSService {
+public class AtonGDSService implements MessageHandler  {
 
     /**
      * The Kafka Brokers addresses.
@@ -87,27 +89,20 @@ public class AtonGDSService {
     private AtonListenerProperties atonListenerProperties;
 
     /**
-     * The AtoN Data Channel to register the message handler into.
+     * The AtoN Publish Channel to listen the AtoN messages to.
      */
     @Autowired
-    @Qualifier("atonDataChannel")
-    private PublishSubscribeChannel atonDataChannel;
-
-    /**
-     * The AtoN Message Handler
-     */
-    @Autowired
-    private AtonMessageHandler atonMessageHandler;
+    @Qualifier("atonPublishChannel")
+    private PublishSubscribeChannel atonPublishChannel;
 
     // Service Variables
     private DataStore producer;
-    private List<AtonGDSListener> dsListeners;
 
     /**
-     * Once the service has been initialised, we can that start the execution
-     * of the kafka data store listeners as a separate components that will run
-     * on independent threads. All incoming messages with then be consumed by
-     * the same handler, but handled based on the topic.
+     * Once the service has been initialised, it will connect to a Kafka Message
+     * Streaming service through the Geomesa Data Store. It will also monitor
+     * the provided Spring Integration channel for incoming AtoN messages which
+     * will then be passed onto Kafka for other interested microservices.
      */
     @PostConstruct
     public void init() {
@@ -138,27 +133,7 @@ public class AtonGDSService {
         }
 
         // Register a new listeners to the data channels
-        atonDataChannel.subscribe(atonMessageHandler);
-
-        // Get and initialise a the listener workers
-        this.dsListeners = this.atonListenerProperties.getListeners()
-                .stream()
-                .map(listener -> {
-                    AtonGDSListener dsListener = null;
-                    try {
-                        dsListener = this.applicationContext.getBean(AtonGDSListener.class);
-                        dsListener.init(this.producer,
-                                        new GeomesaAton().getSimpleFeatureType(),
-                                        listener.getAddress(),
-                                        listener.getPort(),
-                                        listener.getPolygon());
-                    } catch (IOException e) {
-                        log.error(e.getMessage());
-                    }
-                    return  dsListener;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        atonPublishChannel.subscribe(this);
     }
 
     /**
@@ -167,36 +142,39 @@ public class AtonGDSService {
      */
     @PreDestroy
     public void destroy() {
-        log.info("Geomesa Data Store is shutting down...");
-        this.dsListeners.forEach(AtonGDSListener::destroy);
-        this.atonDataChannel.destroy();
+        log.info("Geomesa Data Store Service is shutting down...");
         this.producer.dispose();
+        if(this.atonPublishChannel != null) {
+            this.atonPublishChannel.destroy();
+        }
     }
 
     /**
-     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
-     * this only supports the Kafka Message Streams.
+     * This is a simple handler for the incoming messages. This is a generic
+     * handler for any type of Spring Integration messages but it should really
+     * only be used for the ones containing AtoN node payloads.
      *
-     * @param aton the AtoN node to be pushed into the datastore
+     * @param message               The message to be handled
+     * @throws MessagingException   The Messaging exceptions that might occur
      */
-    public void pushAton(AtonNode aton) {
-        // We need a valid producer to push the AtoN to
-        if(this.producer == null) {
-            throw new ValidationException("No valid Geomesa Data Store producer detected.");
-        }
+    @Override
+    public void handleMessage(Message<?> message) throws MessagingException {
+        // Get the header and payload of the incoming message
+        String endpoint = Objects.toString(message.getHeaders().get(MessageHeaders.CONTENT_TYPE));
 
-        // We need a valid AtoN so that is it published
-        if(aton == null) {
-            throw new ValidationException("A valid AtoN is required for the publication.");
-        }
+        // Check that the message type is correct
+        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof AtonNode)) {
+                log.warn("Radar message handler received a message with erroneous format.");
+                return;
+            }
 
-        // Translate the AtoNs to the Geomesa simple features
-        GeomesaAton gmAton = new GeomesaAton();
-        try {
-            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(aton)));
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            throw new InternalServerErrorException(e.getMessage());
+            // Get the Aton Node payload
+            AtonNode atonNode = AtonNode.class.cast(message.getPayload());
+
+            // Now push the aton node down the Geomesa Data Store
+            this.pushAton(atonNode);
         }
     }
 
@@ -231,6 +209,33 @@ public class AtonGDSService {
         // we only need to do the once - however, calling it repeatedly is a no-op
         datastore.createSchema(sft);
         log.info("Schema created");
+    }
+
+    /**
+     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
+     * this only supports the Kafka Message Streams.
+     *
+     * @param aton the AtoN node to be pushed into the datastore
+     */
+    private void pushAton(AtonNode aton) {
+        // We need a valid producer to push the AtoN to
+        if(this.producer == null) {
+            throw new ValidationException("No valid Geomesa Data Store producer detected.");
+        }
+
+        // We need a valid AtoN so that is it published
+        if(aton == null) {
+            throw new ValidationException("A valid AtoN is required for the publication.");
+        }
+
+        // Translate the AtoNs to the Geomesa simple features
+        GeomesaAton gmAton = new GeomesaAton();
+        try {
+            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(aton)));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            throw new InternalServerErrorException(e.getMessage());
+        }
     }
 
     /**

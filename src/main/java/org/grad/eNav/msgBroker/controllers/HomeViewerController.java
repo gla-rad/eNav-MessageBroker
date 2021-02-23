@@ -18,6 +18,7 @@ package org.grad.eNav.msgBroker.controllers;
 
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.feign.NiordClient;
+import org.grad.eNav.msgBroker.models.PublicationType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
@@ -39,19 +41,7 @@ import java.util.stream.Collectors;
 public class HomeViewerController {
 
     /**
-     * The Radar Listener Properties.
-     */
-    @Autowired
-    private AtonListenerProperties atonListenerProperties;
-
-    /**
-     * The Niord Client.
-     */
-    @Autowired
-    private NiordClient niordClient;
-
-    /**
-     * The home page of the VDES Controller Application.
+     * The home page of the Message Broker Application.
      *
      * @param model The application UI model
      * @return The index page
@@ -59,9 +49,9 @@ public class HomeViewerController {
     @GetMapping("/index.html")
     public String index(Model model) {
         // Add the properties to the UI model
-        model.addAttribute("endpoints", atonListenerProperties.getListeners()
+        model.addAttribute("endpoints", Arrays.asList(PublicationType.values())
                 .stream()
-                .map(l -> String.format("%s:%d", l.getAddress(), l.getPort()))
+                .map(PublicationType::getType)
                 .collect(Collectors.toList()));
         // Return the rendered index
         return "index";
