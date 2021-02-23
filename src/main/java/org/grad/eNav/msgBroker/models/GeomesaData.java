@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.grad.eNav.msgBroker.models;
 
 import org.geotools.data.Query;
@@ -27,15 +28,17 @@ import java.util.List;
 /**
  * The Interface for the data entries transported through the Geomesa data
  * stores.
+ *
+ * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
 public interface GeomesaData<T> {
 
+    // Class Variables
     String getTypeName();
     SimpleFeatureType getSimpleFeatureType();
     List<SimpleFeature> getFeatureData(List<T> list);
     List<Query> getFeatureQueries();
     Filter getSubsetFilter();
-
 
     /**
      * Creates a geotools filter based on a bounding box and date range
