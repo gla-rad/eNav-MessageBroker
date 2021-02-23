@@ -16,15 +16,19 @@
 
 package org.grad.eNav.msgBroker.config;
 
+import org.keycloak.KeycloakPrincipal;
+import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,9 +40,13 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import javax.servlet.DispatcherType;
+import java.security.Principal;
 
 /**
  * The Web Security Configuration.
@@ -49,19 +57,6 @@ import javax.servlet.DispatcherType;
 @EnableWebSecurity
 @ComponentScan(basePackageClasses = KeycloakSecurityComponents.class)
 class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
-
-    /**
-     * Rewiring the security adapter to use the KeycloakAuthenticationProvider
-     * in order to perform the authentication.
-     *
-     * @param auth The authentication manager builder
-     */
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) {
-        KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
-        keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(new SimpleAuthorityMapper());
-        auth.authenticationProvider(keycloakAuthenticationProvider);
-    }
 
     /**
      * Define a slightly more flexible HTTP Firewall configuration that allows
@@ -120,6 +115,23 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     }
 
     /**
+     * Rewiring the security adapter to use the KeycloakAuthenticationProvider
+     * in order to perform the authentication.
+     *
+     * @param auth The authentication manager builder
+     */
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) {
+        SimpleAuthorityMapper grantedAuthorityMapper = new SimpleAuthorityMapper();
+        grantedAuthorityMapper.setPrefix("ROLE_");
+        grantedAuthorityMapper.setConvertToUpperCase(true);
+
+        KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
+        keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(grantedAuthorityMapper);
+        auth.authenticationProvider(keycloakAuthenticationProvider);
+    }
+
+    /**
      * Override this method to configure {@link WebSecurity} so that we ignore
      * certain requests like swagger, css etc.
      *
@@ -134,14 +146,13 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .httpFirewall(securityHttpFirewall())
                 //This will not attempt to authenticate these end points.
                 //Saves on validation requests.
-                .ignoring().antMatchers(
+                .ignoring()
+                .antMatchers(
                     "/webjars/**",  //bootstrap
                     "/css/**",                  //css files
                     "/js/**",                   //js files
-                    "/actuator",                //spring health actuator
-                    "/actuator/**",               //spring health actuator
                     "/favicon.ico"              //the favicon
-        );
+                );
     }
 
     /**
@@ -157,19 +168,56 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         super.configure(httpSecurity);
         httpSecurity
-                .cors()
-                .and()
                 .csrf().disable()
                 .authorizeRequests()
                 .antMatchers(
-                        "/webjars/**",      //bootstrap
-                        "/js/**", 						//js files
-                        "/css/**", 						//css files
-                        "/favicon.ico",                 //the favicon
-                        "/actuator",                    //spring health actuator
-                        "/actuator/*"                   //spring health actuator
+                        "/webjars/**",   //bootstrap
+                        "/js/**", 				    //js files
+                        "/css/**", 				    //css files
+                        "/favicon.ico"              //the favicon
                 ).permitAll()
-                .anyRequest().authenticated();
+                .requestMatchers(EndpointRequest.to( //
+                        InfoEndpoint.class,         //info endpoints
+                        HealthEndpoint.class        //health endpoints
+                )).permitAll()
+                .requestMatchers(EndpointRequest.toAnyEndpoint()) //
+                .hasRole("ACTUATOR")
+                .anyRequest()
+                .authenticated();
+    }
+
+    /**
+     * Allows to inject requests scoped wrapper for {@link KeycloakSecurityContext}.
+     *
+     * Returns the {@link KeycloakSecurityContext} from the Spring
+     * {@link ServletRequestAttributes}'s {@link Principal}.
+     * <p>
+     * The principal must support retrieval of the KeycloakSecurityContext, so at
+     * this point, only {@link KeycloakPrincipal} values and
+     * {@link KeycloakAuthenticationToken} are supported.
+     *
+     * @return the current <code>KeycloakSecurityContext</code>
+     */
+    @Bean
+    @Scope(scopeName = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+    public KeycloakSecurityContext provideKeycloakSecurityContext() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        Principal principal = attributes.getRequest().getUserPrincipal();
+        if (principal == null) {
+            return null;
+        }
+
+        // Check for authenticated users
+        if (principal instanceof KeycloakAuthenticationToken) {
+            principal = Principal.class.cast(KeycloakAuthenticationToken.class.cast(principal).getPrincipal());
+        }
+
+        // Check for tokens based on context - i.e. other services
+        if (principal instanceof KeycloakPrincipal) {
+            return KeycloakPrincipal.class.cast(principal).getKeycloakSecurityContext();
+        }
+
+        return null;
     }
 
 }
