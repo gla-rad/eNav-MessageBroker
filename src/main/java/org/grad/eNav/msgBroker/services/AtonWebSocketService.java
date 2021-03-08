@@ -17,8 +17,9 @@
 package org.grad.eNav.msgBroker.services;
 
 import lombok.extern.slf4j.Slf4j;
-import org.grad.eNav.msgBroker.models.AtonNode;
+import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
+import org.grad.eNav.msgBroker.models.S125Node;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,19 +106,23 @@ public class AtonWebSocketService implements MessageHandler {
         // Check that the message type is correct
         if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
             // Check that this seems ot be a valid message
-            if(!(message.getPayload() instanceof AtonNode)) {
-                log.warn("Radar message handler received a message with erroneous format.");
+            if(!(message.getPayload() instanceof String)) {
+                log.warn("Web-Socket message handler received a message with erroneous format.");
                 return;
             }
 
             // Get the Aton Node payload
-            AtonNode atonNode  = AtonNode.class.cast(message.getPayload());
+            S125Node s125Node = new S125Node(
+                    String.class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID)),
+                    double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
+                    String.class.cast(message.getPayload())
+            );
 
             // A simple debug message;
-            log.debug(String.format("Received AtoN Message with UID: %s.", atonNode.getAtonUid()));
+            log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getAtonUID()));
 
             // And publish it at the appropriate endpoint
-            this.webSocket.convertAndSend(String.format("/%s/%s", prefix, endpoint), atonNode);
+            this.webSocket.convertAndSend(String.format("/%s/%s", prefix, endpoint), s125Node);
         }
 
 

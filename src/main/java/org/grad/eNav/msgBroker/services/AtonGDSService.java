@@ -25,9 +25,7 @@ import org.geotools.data.simple.SimpleFeatureStore;
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
-import org.grad.eNav.msgBroker.models.AtonNode;
-import org.grad.eNav.msgBroker.models.GeomesaAton;
-import org.grad.eNav.msgBroker.models.PublicationType;
+import org.grad.eNav.msgBroker.models.*;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,13 +75,13 @@ public class AtonGDSService implements MessageHandler  {
     private Integer noKafkaConsumers;
 
     /**
-     * The Application Context
+     * The Application Context.
      */
     @Autowired
     private ApplicationContext applicationContext;
 
     /**
-     * The AtoN Listener Properties
+     * The AtoN Listener Properties.
      */
     @Autowired
     private AtonListenerProperties atonListenerProperties;
@@ -95,8 +93,12 @@ public class AtonGDSService implements MessageHandler  {
     @Qualifier("atonPublishChannel")
     private PublishSubscribeChannel atonPublishChannel;
 
-    // Service Variables
-    private DataStore producer;
+    /**
+     * The Geomesa Data Store.
+     */
+    @Autowired
+    @Qualifier("gsDataStore")
+    DataStore producer;
 
     /**
      * Once the service has been initialised, it will connect to a Kafka Message
@@ -108,28 +110,17 @@ public class AtonGDSService implements MessageHandler  {
     public void init() {
         log.info("Geomesa Data Store Service is booting up...");
 
-        Map<String, String> params = new HashMap<>();
-        params.put("kafka.brokers", kafkaBrokers);
-        params.put("kafka.zookeepers", kafkaZookeepers);
-        params.put("kafka.consumer.count", Objects.toString(noKafkaConsumers));
-
         // Create the producer
-        try {
-            this.producer = this.createDataStore(params);
-
-            // Create the AtoN Schema
-            if(this.producer != null) {
-                GeomesaAton gmAton = new GeomesaAton();
-                this.createSchema(this.producer, gmAton.getSimpleFeatureType());
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-
-        // Create the AtoN Schema
         if(this.producer == null) {
             log.error("Unable to connect to data store");
             return;
+        }
+
+        // Create the AtoN Schema
+        try {
+            this.createSchema(this.producer, new GeomesaS125().getSimpleFeatureType());
+        } catch (IOException e) {
+            log.error(e.getMessage());
         }
 
         // Register a new listeners to the data channels
@@ -154,8 +145,8 @@ public class AtonGDSService implements MessageHandler  {
      * handler for any type of Spring Integration messages but it should really
      * only be used for the ones containing AtoN node payloads.
      *
-     * @param message               The message to be handled
-     * @throws MessagingException   The Messaging exceptions that might occur
+     * @param message       The message to be handled
+     * @throws MessagingException The Messaging exceptions that might occur
      */
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {
@@ -165,44 +156,30 @@ public class AtonGDSService implements MessageHandler  {
         // Check that the message type is correct
         if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
             // Check that this seems ot be a valid message
-            if(!(message.getPayload() instanceof AtonNode)) {
-                log.warn("Radar message handler received a message with erroneous format.");
+            if(!(message.getPayload() instanceof String)) {
+                log.warn("Message-Broker message handler received a message with erroneous format.");
                 return;
             }
 
             // Get the Aton Node payload
-            AtonNode atonNode = AtonNode.class.cast(message.getPayload());
+            S125Node s125Node = new S125Node(
+                    String.class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID)),
+                    double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
+                    String.class.cast(message.getPayload())
+            );
 
             // Now push the aton node down the Geomesa Data Store
-            this.pushAton(atonNode);
+            this.pushAton(s125Node);
         }
-    }
-
-    /**
-     * Creates the Geomesa Data Store from scratch. There is no problem if the
-     * store already exists, this will do nothing.
-     *
-     * @param params        The parameters for the generating the datastore
-     * @return The generated data store
-     * @throws IOException IO Exception thrown while accessing the data store
-     */
-    private DataStore createDataStore(Map<String, String> params) throws IOException {
-        log.info("Creating GeoMesa Data Store");
-        DataStore producer = DataStoreFinder.getDataStore(params);
-        if (producer == null) {
-            throw new RuntimeException("Could not create data store with provided parameters");
-        }
-        log.info("GeoMesa Data Store created");
-        return producer;
     }
 
     /**
      * Creates a new schema in the provided data store. The schema is pretty
      * much like the table in a database that will accept the row data.
      *
-     * @param datastore the datastore to create the schema into
-     * @param sft the simple feature type i.e. the schema description
-     * @throws IOException
+     * @param datastore     The datastore to create the schema into
+     * @param sft           The simple feature type i.e. the schema description
+     * @throws IOException IO Exception thrown while creating the data store
      */
     private void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
         log.info("Creating schema: " + DataUtilities.encodeType(sft));
@@ -215,23 +192,23 @@ public class AtonGDSService implements MessageHandler  {
      * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
      * this only supports the Kafka Message Streams.
      *
-     * @param aton the AtoN node to be pushed into the datastore
+     * @param s125          The S125 node to be pushed into the datastore
      */
-    private void pushAton(AtonNode aton) {
+    private void pushAton(S125Node s125) {
         // We need a valid producer to push the AtoN to
         if(this.producer == null) {
             throw new ValidationException("No valid Geomesa Data Store producer detected.");
         }
 
         // We need a valid AtoN so that is it published
-        if(aton == null) {
+        if(s125 == null) {
             throw new ValidationException("A valid AtoN is required for the publication.");
         }
 
         // Translate the AtoNs to the Geomesa simple features
-        GeomesaAton gmAton = new GeomesaAton();
+        GeomesaS125 gmAton = new GeomesaS125();
         try {
-            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(aton)));
+            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(s125)));
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());
@@ -243,10 +220,10 @@ public class AtonGDSService implements MessageHandler  {
      * schema, based on the provided simple feature type. The list of features
      * are generic points of interest that will be send to the data store.
      *
-     * @param datastore the datastore to write the feature into
-     * @param sft the simple feature type
-     * @param features the list of features to be writter to the data store
-     * @throws IOException
+     * @param datastore     The datastore to write the feature into
+     * @param sft           The simple feature type
+     * @param features      The list of features to be written to the data store
+     * @throws IOException IO Exception thrown while writing into the data store
      */
     private void writeFeatures(DataStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
         SimpleFeatureStore producerFS = (SimpleFeatureStore) datastore.getFeatureSource(sft.getTypeName());

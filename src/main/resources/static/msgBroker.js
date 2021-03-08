@@ -73,10 +73,9 @@ function showMessage(endpoint, msg) {
     if(endpoint === "aton") {
         var aton = msg;
         // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.tags["seamark:ref"]
-            + "</td><td class=\"col-4\">" + aton.timestamp + "</td>"
-            + "</td><td class=\"col-2\">" + aton.lat + "</td>"
-            + "</td><td class=\"col-2\">" + aton.lon + "</td></tr>");
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.atonUID
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td class=\"col-2\">" + aton.content + "</td>");
     }
     // For any other type
     else {

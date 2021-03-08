@@ -16,13 +16,9 @@
 
 package org.grad.eNav.msgBroker.models;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.geotools.data.Query;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.factory.Hints;
-import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
 import org.locationtech.jts.geom.Point;
 import org.opengis.feature.simple.SimpleFeature;
@@ -31,7 +27,6 @@ import org.opengis.filter.Filter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +36,7 @@ import java.util.stream.Collectors;
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
-public class GeomesaAton implements GeomesaData<AtonNode>{
+public class GeomesaS125 implements GeomesaData<S125Node>{
 
     // Class Variables
     private SimpleFeatureType sft = null;
@@ -74,16 +69,9 @@ public class GeomesaAton implements GeomesaData<AtonNode>{
             // this is a reduced set of the attributes from GDELT 2.0
             StringBuilder attributes = new StringBuilder();
 
-            attributes.append("atonId:Integer,");
             attributes.append("atonUID:String,");
-            attributes.append("uid:Integer,");
-            attributes.append("user:String,");
-            attributes.append("visible:Boolean,");
-            attributes.append("changeset:Integer,");
-            attributes.append("version:Integer,");
-            attributes.append("timestamp:Date,");
             attributes.append("*geom:Point:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
-            attributes.append("tags:String");
+            attributes.append("content:String");
 
             // create the simple-feature type - use the GeoMesa 'SimpleFeatureTypes' class for best compatibility
             // may also use geotools DataUtilities or SimpleFeatureTypeBuilder, but some features may not work
@@ -103,42 +91,28 @@ public class GeomesaAton implements GeomesaData<AtonNode>{
      * follow the same construct as the definition provided in the simple
      * feature type.
      *
-     * @param atons     The list of AtoNs to generate the simple features
+     * @param s125Nodes     The list of AtoNs to generate the simple features
      * @return The simple features based on the provided object list
      */
     @Override
-    public List<SimpleFeature> getFeatureData(List<AtonNode> atons) {
+    public List<SimpleFeature> getFeatureData(List<S125Node> s125Nodes) {
         if (features == null) {
             List<SimpleFeature> features = new ArrayList<>();
 
             // Use a geotools SimpleFeatureBuilder to create our features
             SimpleFeatureBuilder builder = new SimpleFeatureBuilder(getSimpleFeatureType());
 
-            for(AtonNode aton: atons) {
-                builder.set("atonId", aton.getId());
-                builder.set("atonUID", aton.getAtonUid());
-                builder.set("uid", aton.getUid());
-                builder.set("user", aton.getUser());
-                builder.set("visible", aton.getVisible());
-                builder.set("changeset", aton.getChangeset());
-                builder.set("version", aton.getVersion());
-                builder.set("visible", aton.getVisible());
-                builder.set("timestamp", aton.getTimestamp());
-                builder.set("geom", "POINT (" + aton.getLon() + " " + aton.getLat() + ")");
-
-                // Now map the tags as JSON
-                try {
-                    builder.set("tags", new ObjectMapper().writeValueAsString(aton.getTags()));
-                } catch (JsonProcessingException e) {
-                    throw new InternalServerErrorException(e.getMessage());
-                }
+            for(S125Node node: s125Nodes) {
+                builder.set("atonUID", node.getAtonUID());
+                builder.set("geom", "POINT (" + node.bbox[0] + " " + node.bbox[1] + ")");
+                builder.set("content", node.getContent());
 
                 // be sure to tell GeoTools explicitly that we want to use the ID we provided
                 builder.featureUserData(Hints.USE_PROVIDED_FID, Boolean.TRUE);
 
                 // build the feature - this also resets the feature builder for the next entry
                 // use the AtoN UID as the feature ID
-                features.add(builder.buildFeature(aton.getAtonUid()));
+                features.add(builder.buildFeature(node.getAtonUID()));
             }
             this.features = Collections.unmodifiableList(features);
         }
@@ -153,7 +127,7 @@ public class GeomesaAton implements GeomesaData<AtonNode>{
      * @param features  The list of simple features to be used
      * @return The list of objects reconstructed
      */
-    public List<AtonNode> retrieveData(List<SimpleFeature> features) {
+    public List<S125Node> retrieveData(List<SimpleFeature> features) {
         // A sanity check
         if(features == null) {
             return Collections.emptyList();
@@ -161,32 +135,19 @@ public class GeomesaAton implements GeomesaData<AtonNode>{
 
         // Otherwise map all the provided features
         return features.stream()
-                .map(feature -> {
-                    // Create the AtoN Node message
-                    AtonNode atonNode = new AtonNode();
-                    atonNode.setId((Integer)feature.getAttribute("atonId"));
-                    atonNode.setUid((Integer)feature.getAttribute("uid"));
-                    atonNode.setUser((String)feature.getAttribute("user"));
-                    atonNode.setVisible((Boolean)feature.getAttribute("visible"));
-                    atonNode.setChangeset((Integer)feature.getAttribute("changeset"));
-                    atonNode.setVersion((Integer)feature.getAttribute("version"));
-                    atonNode.setTimestamp((Date)feature.getAttribute("timestamp"));
-                    atonNode.setLon(((Point)feature.getAttribute("geom")).getX());
-                    atonNode.setLat(((Point)feature.getAttribute("geom")).getY());
-                    List<AtonTag> tags = new ArrayList<>();
-                    try {
-                        tags.addAll(new ObjectMapper().readValue((String)feature.getAttribute("tags"), new TypeReference<List<AtonTag>>(){}));
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                    }
-                    atonNode.setTags(tags.toArray(new AtonTag[]{}));
-                    return atonNode;
-                })
+                .map(feature ->
+                    // Create the S125 Node message
+                    new S125Node(
+                            ((String)feature.getAttribute("atonUID")),
+                            new double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
+                            ((String)feature.getAttribute("content"))
+                    )
+                )
                 .collect(Collectors.toList());
     }
 
     /**
-     * Returns the list of queries through which data can be filtered. Currenlty
+     * Returns the list of queries through which data can be filtered. Currently
      * we want to show all data.
      *
      * @return The list of queries to filter the data for

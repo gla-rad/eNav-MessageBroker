@@ -16,13 +16,8 @@
 
 package org.grad.eNav.msgBroker.feign;
 
-import org.grad.eNav.msgBroker.models.AtonNode;
-import org.grad.eNav.msgBroker.models.SearchResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 /**
  * The Feign Interface For the Niord Client.
@@ -33,12 +28,5 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 @FeignClient(name = "niord")
 public interface NiordClient {
 
-    /**
-     * Returns the AtoNs search result.
-     *
-     * @return The search result of the AtoNs search
-     */
-    @RequestMapping(value = "/rest/atons/search", method = GET)
-    SearchResult<AtonNode> atonSearch();
 
 }
