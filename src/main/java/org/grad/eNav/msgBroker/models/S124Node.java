@@ -22,7 +22,7 @@ public class S124Node extends S100AbstractNode {
      * @param bbox          The object bounding box
      * @param content       The XML content
      */
-    public S124Node(String messageId, double[] bbox, String content) {
+    public S124Node(String messageId, Double[] bbox, String content) {
         super(bbox, content);
         this.messageId = messageId;
     }

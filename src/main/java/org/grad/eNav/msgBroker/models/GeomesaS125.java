@@ -139,7 +139,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
                     // Create the S125 Node message
                     new S125Node(
                             ((String)feature.getAttribute("atonUID")),
-                            new double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
+                            new Double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
                             ((String)feature.getAttribute("content"))
                     )
                 )

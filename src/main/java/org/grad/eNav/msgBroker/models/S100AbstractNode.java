@@ -15,7 +15,7 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
-    public double[] bbox;
+    public Double[] bbox;
     public String content;
 
     /**
@@ -30,7 +30,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      * @param bbox          The object bounding box
      * @param content       The XML content
      */
-    public S100AbstractNode(double[] bbox, String content) {
+    public S100AbstractNode(Double[] bbox, String content) {
         this.bbox = bbox;
         this.content = content;
     }
@@ -58,7 +58,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @return Value of bbox.
      */
-    public double[] getBbox() {
+    public Double[] getBbox() {
         return bbox;
     }
 
@@ -67,7 +67,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @param bbox New value of bbox.
      */
-    public void setBbox(double[] bbox) {
+    public void setBbox(Double[] bbox) {
         this.bbox = bbox;
     }
 

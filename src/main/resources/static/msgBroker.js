@@ -75,7 +75,7 @@ function showMessage(endpoint, msg) {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.atonUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-2\">" + aton.content + "</td>");
+            + "</td><td class=\"col-4\">" + aton.content + "</td>");
     }
     // For any other type
     else {
@@ -83,8 +83,8 @@ function showMessage(endpoint, msg) {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + "unknown"
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-2\">" + "N/A" + "</td>"
-            + "</td><td class=\"col-2\">" + "N/A" + "</td></tr>");
+            + "</td><td class=\"col-4\">" + "N/A" + "</td>"
+            + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
     }
     noOfMessages++;
 }

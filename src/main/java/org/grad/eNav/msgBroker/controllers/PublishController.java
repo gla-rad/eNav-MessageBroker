@@ -14,6 +14,8 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.PathParam;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -56,11 +58,11 @@ public class PublishController {
      * @return The receive AtoN along with the HTTP response
      */
     @PostMapping(
-            value = "/atons",
-            consumes = {MediaType.APPLICATION_XML_VALUE},
-            produces = {MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<String> publishAton(@RequestParam String atonUID,
-                                              @RequestParam double[] bbox,
+            value = "/atons/{atonUID}",
+            consumes = {"application/gml+xml;charset=UTF-8"},
+            produces = {"application/gml+xml;charset=UTF-8"})
+    public ResponseEntity<String> publishAton(@PathVariable("atonUID") String atonUID,
+                                              @RequestParam List<Double> bbox,
                                               @RequestBody String x125) {
         // Publish the message
         Optional.ofNullable(x125)
@@ -68,7 +70,7 @@ public class PublishController {
                 .map(builder -> {
                     builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
                     builder.setHeader(PubSubCustomHeaders.PUBSUB_S125_ID, atonUID);
-                    builder.setHeader(PubSubCustomHeaders.PUBSUB_BBOX, bbox);
+                    builder.setHeader(PubSubCustomHeaders.PUBSUB_BBOX, bbox.toArray(new Double[]{}));
                     return builder;
                 })
                 .map(MessageBuilder::build)

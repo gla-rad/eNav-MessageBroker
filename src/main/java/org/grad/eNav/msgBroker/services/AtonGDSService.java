@@ -164,7 +164,7 @@ public class AtonGDSService implements MessageHandler  {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     String.class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID)),
-                    double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
+                    Double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
                     String.class.cast(message.getPayload())
             );
 
