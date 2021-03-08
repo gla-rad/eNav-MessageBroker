@@ -46,7 +46,7 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-public class AtonWebSocketService implements MessageHandler {
+public class S125WebSocketService implements MessageHandler {
 
     /**
      * The General Destination Prefix

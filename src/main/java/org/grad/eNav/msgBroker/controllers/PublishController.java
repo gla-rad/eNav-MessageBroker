@@ -3,18 +3,16 @@ package org.grad.eNav.msgBroker.controllers;
 import org.grad.eNav.msgBroker.feign.NiordClient;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
-import org.grad.eNav.msgBroker.services.AtonGDSService;
+import org.grad.eNav.msgBroker.services.S125GDSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.web.bind.annotation.*;
 
-import javax.ws.rs.PathParam;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +46,7 @@ public class PublishController {
      * The AtoN Geomesa Data Store Service.
      */
     @Autowired
-    private AtonGDSService atonGDSService;
+    private S125GDSService s125GDSService;
 
     /**
      * Receives an AtoN as a REST POST request and pushes it as a publication to

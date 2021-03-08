@@ -54,7 +54,7 @@ import java.util.*;
 @Service
 @Slf4j
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-public class AtonGDSService implements MessageHandler  {
+public class S125GDSService implements MessageHandler  {
 
     /**
      * The Kafka Brokers addresses.

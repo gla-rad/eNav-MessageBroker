@@ -1,12 +1,8 @@
 package org.grad.eNav.msgBroker;
 
 import org.geotools.data.DataStore;
-import org.grad.eNav.msgBroker.services.AtonGDSService;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 import javax.security.auth.message.config.RegistrationListener;
 

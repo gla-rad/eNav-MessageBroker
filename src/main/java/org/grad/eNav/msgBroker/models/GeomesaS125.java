@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The implementation of the AtoN data entrie transported through the Geomesa
+ * The implementation of the S-125 data entries transported through the Geomesa
  * data stores.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
@@ -51,7 +51,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
      */
     @Override
     public String getTypeName() {
-        return "AtoN";
+        return "S125";
     }
 
     /**
