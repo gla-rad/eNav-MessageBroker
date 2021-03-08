@@ -86,6 +86,8 @@ function showMessage(endpoint, msg) {
             + "</td><td class=\"col-4\">" + "N/A" + "</td>"
             + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
     }
+
+    // Increase the number of shown messages
     noOfMessages++;
 }
 
