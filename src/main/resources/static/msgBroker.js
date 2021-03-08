@@ -75,7 +75,7 @@ function showMessage(endpoint, msg) {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.atonUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-4\">" + aton.content + "</td>");
+            + "</td><td class=\"col-4\">" + xmlToString(aton.content) + "</td>");
     }
     // For any other type
     else {
@@ -87,6 +87,26 @@ function showMessage(endpoint, msg) {
             + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
     }
     noOfMessages++;
+}
+
+/**
+ * A simple utility function that translates the provided XML input into a
+ * string that can be displayed into HTML.
+ */
+function xmlToString(xml_node)
+{
+    if (xml_node.xml)
+        return xml_node.xml;
+    else if (XMLSerializer)
+    {
+        var xml_serializer = new XMLSerializer();
+        return xml_serializer.serializeToString(xml_node);
+    }
+    else
+    {
+        alert("ERROR: Extremely old browser");
+        return "";
+    }
 }
 
 /**
