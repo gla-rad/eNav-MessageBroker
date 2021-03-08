@@ -71,15 +71,15 @@ function showMessage(endpoint, msg) {
     }
     // Handle Atons
     if(endpoint === "aton") {
-        var aton = msg;
         // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + aton.atonUID
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-4\">" + xmlToString(aton.content) + "</td>");
+            + "</td><td id=\"" + msg.atonUID + "Content\" class=\"col-4\"></td>");
+        // Add the content XML as text
+        $("#" + msg.atonUID + "Content").text(msg.content);
     }
     // For any other type
     else {
-        var unknown = msg;
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + "unknown"
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
@@ -87,26 +87,6 @@ function showMessage(endpoint, msg) {
             + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
     }
     noOfMessages++;
-}
-
-/**
- * A simple utility function that translates the provided XML input into a
- * string that can be displayed into HTML.
- */
-function xmlToString(xml_node)
-{
-    if (xml_node.xml)
-        return xml_node.xml;
-    else if (XMLSerializer)
-    {
-        var xml_serializer = new XMLSerializer();
-        return xml_serializer.serializeToString(xml_node);
-    }
-    else
-    {
-        alert("ERROR: Extremely old browser");
-        return "";
-    }
 }
 
 /**
