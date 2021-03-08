@@ -74,7 +74,7 @@ function showMessage(endpoint, msg) {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.atonUID + "Content\" class=\"col-4\"></td>");
+            + "</td><td id=\"" + msg.atonUID + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
         // Add the content XML as text
         $("#" + msg.atonUID + "Content").text(msg.content);
     }
