@@ -100,6 +100,10 @@ public class S125GDSService implements MessageHandler  {
     @Qualifier("gsDataStore")
     DataStore producer;
 
+    // Service Variables
+    GeomesaS125 geomesaData;
+    SimpleFeatureStore featureStore;
+
     /**
      * Once the service has been initialised, it will connect to a Kafka Message
      * Streaming service through the Geomesa Data Store. It will also monitor
@@ -119,6 +123,8 @@ public class S125GDSService implements MessageHandler  {
         // Create the AtoN Schema
         try {
             this.createSchema(this.producer, new GeomesaS125().getSimpleFeatureType());
+            this.geomesaData = new GeomesaS125();
+            this.featureStore = (SimpleFeatureStore) this.producer.getFeatureSource(this.geomesaData.getTypeName());
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -138,6 +144,21 @@ public class S125GDSService implements MessageHandler  {
         if(this.atonPublishChannel != null) {
             this.atonPublishChannel.destroy();
         }
+    }
+
+    /**
+     * Creates a new schema in the provided data store. The schema is pretty
+     * much like the table in a database that will accept the row data.
+     *
+     * @param datastore     The datastore to create the schema into
+     * @param sft           The simple feature type i.e. the schema description
+     * @throws IOException IO Exception thrown while creating the data store
+     */
+    private void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
+        log.info("Creating schema: " + DataUtilities.encodeType(sft));
+        // we only need to do the once - however, calling it repeatedly is a no-op
+        datastore.createSchema(sft);
+        log.info("Schema created");
     }
 
     /**
@@ -174,41 +195,22 @@ public class S125GDSService implements MessageHandler  {
     }
 
     /**
-     * Creates a new schema in the provided data store. The schema is pretty
-     * much like the table in a database that will accept the row data.
-     *
-     * @param datastore     The datastore to create the schema into
-     * @param sft           The simple feature type i.e. the schema description
-     * @throws IOException IO Exception thrown while creating the data store
-     */
-    private void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
-        log.info("Creating schema: " + DataUtilities.encodeType(sft));
-        // we only need to do the once - however, calling it repeatedly is a no-op
-        datastore.createSchema(sft);
-        log.info("Schema created");
-    }
-
-    /**
      * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
      * this only supports the Kafka Message Streams.
      *
-     * @param s125          The S125 node to be pushed into the datastore
+     * @param s125Node          The S-125 node to be pushed into the datastore
      */
-    private void pushAton(S125Node s125) {
+    private void pushAton(S125Node s125Node) {
         // We need a valid producer to push the AtoN to
         if(this.producer == null) {
             throw new ValidationException("No valid Geomesa Data Store producer detected.");
         }
 
-        // We need a valid AtoN so that is it published
-        if(s125 == null) {
-            throw new ValidationException("A valid AtoN is required for the publication.");
-        }
-
         // Translate the AtoNs to the Geomesa simple features
-        GeomesaS125 gmAton = new GeomesaS125();
         try {
-            this.writeFeatures(this.producer, gmAton.getSimpleFeatureType(), gmAton.getFeatureData(Collections.singletonList(s125)));
+            this.writeFeatures(this.featureStore,
+                    this.geomesaData.getSimpleFeatureType(),
+                    this.geomesaData.getFeatureData(Collections.singletonList(s125Node)));
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());
@@ -225,9 +227,8 @@ public class S125GDSService implements MessageHandler  {
      * @param features      The list of features to be written to the data store
      * @throws IOException IO Exception thrown while writing into the data store
      */
-    private void writeFeatures(DataStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
-        SimpleFeatureStore producerFS = (SimpleFeatureStore) datastore.getFeatureSource(sft.getTypeName());
-        producerFS.addFeatures(new ListFeatureCollection(sft, features));
+    private void writeFeatures(SimpleFeatureStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
+        datastore.addFeatures(new ListFeatureCollection(sft, features));
     }
 
 }

@@ -15,8 +15,8 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
-    public Double[] bbox;
-    public String content;
+    private Double[] bbox;
+    private String content;
 
     /**
      * The Default Constructor.

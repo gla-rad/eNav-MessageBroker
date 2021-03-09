@@ -18,6 +18,8 @@ package org.grad.eNav.msgBroker.models;
 
 import org.geotools.data.Query;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.filter.text.cql2.CQLException;
+import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.factory.Hints;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
 import org.locationtech.jts.geom.Point;
@@ -28,6 +30,7 @@ import org.opengis.filter.Filter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -42,12 +45,47 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     private SimpleFeatureType sft = null;
     private List<SimpleFeature> features = null;
     private List<Query> queries = null;
-    private Filter subsetFilter = null;
+    private List<Double> bounds = null;
+
+    /**
+     * Empty Constructor
+     */
+    public GeomesaS125() {
+
+    }
+
+    /**
+     * Constructor with a specified bounds area.
+     *
+     * @param bounds    The bounds area edges list
+     */
+    public GeomesaS125(List<Double> bounds) {
+        this.bounds = bounds;
+    }
+
+    /**
+     * Sets new bounds.
+     *
+     * @param bounds New value of bounds.
+     */
+    public void setBounds(List<Double> bounds) {
+        this.bounds = bounds;
+    }
+
+    /**
+     * Gets bounds.
+     *
+     * @return Value of bounds.
+     */
+    public List<Double> getBounds() {
+        return bounds;
+    }
+
 
     /**
      * Defines the Geomesa Data Type - AtoN.
      *
-     * @return      The Geomesa Data Type
+     * @return The Geomesa Data Type
      */
     @Override
     public String getTypeName() {
@@ -104,7 +142,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
 
             for(S125Node node: s125Nodes) {
                 builder.set("atonUID", node.getAtonUID());
-                builder.set("geom", "POINT (" + node.bbox[0] + " " + node.bbox[1] + ")");
+                builder.set("geom", "POINT (" + node.getBbox()[0] + " " + node.getBbox()[1] + ")");
                 builder.set("content", node.getContent());
 
                 // be sure to tell GeoTools explicitly that we want to use the ID we provided
@@ -136,12 +174,12 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
         // Otherwise map all the provided features
         return features.stream()
                 .map(feature ->
-                    // Create the S125 Node message
-                    new S125Node(
-                            ((String)feature.getAttribute("atonUID")),
-                            new Double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
-                            ((String)feature.getAttribute("content"))
-                    )
+                        // Create the S125 Node message
+                        new S125Node(
+                                ((String)feature.getAttribute("atonUID")),
+                                new Double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
+                                ((String)feature.getAttribute("content"))
+                        )
                 )
                 .collect(Collectors.toList());
     }
@@ -166,10 +204,31 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     /**
      * A subsequent filter to further refine the feature search.
      *
+     * In the current context of S125 this could be a generic polygon that
+     * defines the area of a VDES station.
+     *
      * @return The subsequent filter to further refine the search
      */
     @Override
     public Filter getSubsetFilter() {
-        return Filter.INCLUDE;
+        // For no or invalid filters, just reject everything
+        if(Optional.ofNullable(bounds).map(List::size).orElse(0) <= 0) {
+            return Filter.EXCLUDE;
+        }
+
+        // there are many different geometric predicates that might be used;
+        // here, we use a polygon (POLYGON) predicate as an example. This is
+        // useful for a general query area.
+        try {
+            String cqlGeometry = "POLYGON(geom,"
+                    + String.join(",", this.bounds.stream().map(String::valueOf).collect(Collectors.toList()))
+                    + ")";
+
+            // We use geotools ECQL class to parse a CQL string into a Filter object
+            return ECQL.toFilter(cqlGeometry);
+        } catch (CQLException ex) {
+            // Any errors... then exclude by default
+            return Filter.EXCLUDE;
+        }
     }
 }

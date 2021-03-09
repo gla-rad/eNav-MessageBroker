@@ -13,7 +13,7 @@ import java.util.Objects;
 public class S124Node extends S100AbstractNode {
 
     // Class Variables
-    public String messageId;
+    private String messageId;
 
     /**
      * The Fully Populated  Constructor.

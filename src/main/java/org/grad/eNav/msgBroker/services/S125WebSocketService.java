@@ -17,6 +17,7 @@
 package org.grad.eNav.msgBroker.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.grad.eNav.msgBroker.models.GeomesaData;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
@@ -39,7 +40,7 @@ import java.util.Objects;
  * The AtonWebSocketService Class
  *
  * This class implements a handler for the AtoN messages coming into a Spring
- * Integration channel. It basically just published them to another channel,
+ * Integration channel. It basically just publishes them to another channel,
  * which happens to be a web-socket implementation.
  *
  * @author Nikolaos Vastardis
@@ -121,12 +122,20 @@ public class S125WebSocketService implements MessageHandler {
             // A simple debug message;
             log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getAtonUID()));
 
-            // And publish it at the appropriate endpoint
-            this.webSocket.convertAndSend(String.format("/%s/%s", prefix, endpoint), s125Node);
+            // Now push the aton node down the web-socket stream
+            this.pushAton(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
         }
+    }
 
-
-
+    /**
+     * Pushes a new/updated AtoN node into the Web-Socket messaging template.
+     *
+     * @param messagingTemplate     The web-socket messaging template
+     * @param topic                 The topic of the web-socket
+     * @param payload               The payload to be pushed
+     */
+    private void pushAton(SimpMessagingTemplate messagingTemplate, String topic, Object payload) {
+        messagingTemplate.convertAndSend(topic, payload);
     }
 
 }

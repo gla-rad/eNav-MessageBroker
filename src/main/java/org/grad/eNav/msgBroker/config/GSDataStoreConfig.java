@@ -50,7 +50,6 @@ public class GSDataStoreConfig {
      * @return the Geomesa Data Store constructed according to the configuration parameters
      */
     @Bean
-    @Lazy
     DataStore gsDataStore() {
         // The the connection parameters
         Map<String, String> params = new HashMap<>();
