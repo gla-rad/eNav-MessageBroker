@@ -105,7 +105,6 @@ public class S125GDSService implements MessageHandler  {
     DataStore producer;
 
     // Service Variables
-    GeomesaS125 geomesaData;
     SimpleFeatureStore featureStore;
 
     /**
@@ -127,8 +126,7 @@ public class S125GDSService implements MessageHandler  {
         // Create the AtoN Schema
         try {
             this.createSchema(this.producer, new GeomesaS125().getSimpleFeatureType());
-            this.geomesaData = new GeomesaS125();
-            this.featureStore = (SimpleFeatureStore) this.producer.getFeatureSource(this.geomesaData.getTypeName());
+            this.featureStore = (SimpleFeatureStore) this.producer.getFeatureSource(new GeomesaS125().getTypeName());
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -211,10 +209,11 @@ public class S125GDSService implements MessageHandler  {
         }
 
         // Translate the AtoNs to the Geomesa simple features
+        GeomesaS125 geomesaData = new GeomesaS125();
         try {
             this.writeFeatures(this.featureStore,
-                    this.geomesaData.getSimpleFeatureType(),
-                    this.geomesaData.getFeatureData(Collections.singletonList(s125Node)));
+                    geomesaData.getSimpleFeatureType(),
+                    geomesaData.getFeatureData(Collections.singletonList(s125Node)));
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());
