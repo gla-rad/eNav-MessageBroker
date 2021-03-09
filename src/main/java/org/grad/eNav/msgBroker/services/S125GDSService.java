@@ -18,14 +18,16 @@ package org.grad.eNav.msgBroker.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
-import org.grad.eNav.msgBroker.models.*;
+import org.grad.eNav.msgBroker.models.GeomesaS125;
+import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
+import org.grad.eNav.msgBroker.models.PublicationType;
+import org.grad.eNav.msgBroker.models.S125Node;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +46,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * The AtoN Geomesa Data Store Service.
@@ -184,9 +188,9 @@ public class S125GDSService implements MessageHandler  {
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
-                    String.class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID)),
-                    Double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
-                    String.class.cast(message.getPayload())
+                    (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
+                    (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    (String) message.getPayload()
             );
 
             // Now push the aton node down the Geomesa Data Store

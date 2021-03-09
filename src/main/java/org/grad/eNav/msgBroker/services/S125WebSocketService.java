@@ -17,7 +17,6 @@
 package org.grad.eNav.msgBroker.services;
 
 import lombok.extern.slf4j.Slf4j;
-import org.grad.eNav.msgBroker.models.GeomesaData;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
@@ -114,9 +113,9 @@ public class S125WebSocketService implements MessageHandler {
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
-                    String.class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID)),
-                    Double[].class.cast(message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX)),
-                    String.class.cast(message.getPayload())
+                    (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
+                    (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    (String) message.getPayload()
             );
 
             // A simple debug message;
