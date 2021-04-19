@@ -1,0 +1,9 @@
+[Unit]
+Description=e-Navigation Message Broker Service
+After=syslog.target
+
+[Service]
+ExecStart=/opt/e-nav/messageBroker/messageBroker.jar
+
+[Install]
+WantedBy=multi-user.target
