@@ -18,16 +18,25 @@ public class GeoJSONUtilsTest {
         assertNotNull(point00);
         assertEquals("Point", point00.get("type").textValue());
         assertEquals("[0.0,0.0]", point00.get("coordinates").toString());
+        assertEquals("EPSG:4326", point00.get("crs").get("properties").get("name").textValue());
 
         JsonNode point12 = GeoJSONUtils.createGeoJSONPoint(1, 2);
         assertNotNull(point12);
         assertEquals("Point", point12.get("type").textValue());
         assertEquals("[1,2]", point12.get("coordinates").toString());
+        assertEquals("EPSG:4326", point12.get("crs").get("properties").get("name").textValue());
 
         JsonNode point18090 = GeoJSONUtils.createGeoJSONPoint(180, 90);
         assertNotNull(point18090);
         assertEquals("Point", point18090.get("type").textValue());
         assertEquals("[180,90]", point18090.get("coordinates").toString());
+        assertEquals("EPSG:4326", point18090.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point18090CRS = GeoJSONUtils.createGeoJSONPoint(180, 90, 2810);
+        assertNotNull(point18090CRS);
+        assertEquals("Point", point18090CRS.get("type").textValue());
+        assertEquals("[180,90]", point18090CRS.get("coordinates").toString());
+        assertEquals("EPSG:2810", point18090CRS.get("crs").get("properties").get("name").textValue());
     }
 
     /**

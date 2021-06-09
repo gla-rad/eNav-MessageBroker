@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The GeoJSON Utils Class.
@@ -30,8 +32,23 @@ public class GeoJSONUtils {
      * @return the GeoJSON point object
      */
     public static JsonNode createGeoJSONPoint(double x, double y) {
+        return createGeoJSONPoint(x, y, null);
+    }
+
+    /**
+     * A helper function that will return a GeoJSON Point object based on the
+     * provided x and y coordinates. This extended version also allows users
+     * to define the coordinate reference system through the SRID parameter.
+     *
+     * @param x the x value of the coordinate
+     * @param y the y value of the coordinate
+     * @param srid the default coordinate reference system ID - defaults to EPSG:4326
+     * @return the GeoJSON point object
+     */
+    public static JsonNode createGeoJSONPoint(double x, double y, Integer srid) {
         // First create a com.locationtech.jts Point geometry;
-        Point point = new GeometryFactory().createPoint(new Coordinate(x, y));
+        GeometryFactory factory = new GeometryFactory(new PrecisionModel(), Optional.ofNullable(srid).orElse(4326));
+        Point point = factory.createPoint(new Coordinate(x, y));
 
         // Now convert into a JSON node
         ObjectMapper om = new ObjectMapper();
