@@ -21,16 +21,15 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.factory.Hints;
+import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +44,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     private SimpleFeatureType sft = null;
     private List<SimpleFeature> features = null;
     private List<Query> queries = null;
-    private List<Double> bounds = null;
+    private Geometry geometry = null;
 
     /**
      * Empty Constructor
@@ -55,30 +54,30 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     }
 
     /**
-     * Constructor with a specified bounds area.
+     * Constructor with a specified geometry area.
      *
-     * @param bounds    The bounds area edges list
+     * @param geometry the geometry of the Geomesa S125 object
      */
-    public GeomesaS125(List<Double> bounds) {
-        this.bounds = bounds;
+    public GeomesaS125(Geometry geometry) {
+        this.geometry = geometry;
     }
 
     /**
-     * Sets new bounds.
+     * Sets new geometry.
      *
-     * @param bounds New value of bounds.
+     * @param geometry new value of geometry.
      */
-    public void setBounds(List<Double> bounds) {
-        this.bounds = bounds;
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
     }
 
     /**
-     * Gets bounds.
+     * Gets geometry.
      *
-     * @return Value of bounds.
+     * @return Value of geometry.
      */
-    public List<Double> getBounds() {
-        return bounds;
+    public Geometry getGeometry() {
+        return geometry;
     }
 
 
@@ -142,7 +141,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
 
             for(S125Node node: s125Nodes) {
                 builder.set("atonUID", node.getAtonUID());
-                builder.set("geom", "POINT (" + node.getBbox()[0] + " " + node.getBbox()[1] + ")");
+                builder.set("geom", GeoJSONUtils.geoJSONPointToECQL(node.getBbox()));
                 builder.set("content", node.getContent());
 
                 // be sure to tell GeoTools explicitly that we want to use the ID we provided
@@ -177,7 +176,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
                         // Create the S125 Node message
                         new S125Node(
                                 ((String)feature.getAttribute("atonUID")),
-                                new Double[]{((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()},
+                                GeoJSONUtils.createGeoJSONPoint(((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()),
                                 ((String)feature.getAttribute("content"))
                         )
                 )
@@ -212,7 +211,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     @Override
     public Filter getSubsetFilter() {
         // For no or invalid filters, just reject everything
-        if(Optional.ofNullable(bounds).map(List::size).orElse(0) <= 0) {
+        if(Optional.ofNullable(geometry).map(Geometry::isEmpty).orElse(Boolean.TRUE)) {
             return Filter.EXCLUDE;
         }
 
@@ -220,9 +219,13 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
         // here, we use a polygon (POLYGON) predicate as an example. This is
         // useful for a general query area.
         try {
-            String cqlGeometry = "POLYGON(geom,"
-                    + String.join(",", this.bounds.stream().map(String::valueOf).collect(Collectors.toList()))
-                    + ")";
+            String cqlGeometry = "WITHIN(geom, Polygon(("
+                    + String.join(", ",
+                    Arrays.asList(this.geometry.getCoordinates())
+                            .stream().map(c -> c.getX() + " " + c.getY())
+                            .collect(Collectors.toList())
+            )
+                    + ")) )";
 
             // We use geotools ECQL class to parse a CQL string into a Filter object
             return ECQL.toFilter(cqlGeometry);

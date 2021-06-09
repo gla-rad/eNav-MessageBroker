@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataUtilities;
@@ -187,7 +188,7 @@ public class S125GDSService implements MessageHandler  {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
-                    (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    (JsonNode) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
                     (String) message.getPayload()
             );
 

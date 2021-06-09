@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
+import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,10 +31,12 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.expression.Arrays;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The AtonWebSocketService Class
@@ -102,9 +105,10 @@ public class S125WebSocketService implements MessageHandler {
     public void handleMessage(Message<?> message) throws MessagingException {
         // Get the header and payload of the incoming message
         String endpoint = Objects.toString(message.getHeaders().get(MessageHeaders.CONTENT_TYPE));
+        Double[] coordinates = (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX);
 
         // Check that the message type is correct
-        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0 && Optional.ofNullable(coordinates).map(c -> c.length).orElse(0) >= 2) {
             // Check that this seems ot be a valid message
             if(!(message.getPayload() instanceof String)) {
                 log.warn("Web-Socket message handler received a message with erroneous format.");
@@ -114,7 +118,7 @@ public class S125WebSocketService implements MessageHandler {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
-                    (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    GeoJSONUtils.createGeoJSONPoint(coordinates[0], coordinates[1]),
                     (String) message.getPayload()
             );
 

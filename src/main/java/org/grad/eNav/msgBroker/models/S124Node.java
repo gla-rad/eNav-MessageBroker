@@ -16,6 +16,8 @@
 
 package org.grad.eNav.msgBroker.models;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.Objects;
 
 /**
@@ -38,7 +40,7 @@ public class S124Node extends S100AbstractNode {
      * @param bbox          The object bounding box
      * @param content       The XML content
      */
-    public S124Node(String messageId, Double[] bbox, String content) {
+    public S124Node(String messageId, JsonNode bbox, String content) {
         super(bbox, content);
         this.messageId = messageId;
     }

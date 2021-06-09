@@ -1,9 +1,11 @@
 package org.grad.eNav.msgBroker.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.feign.NiordClient;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.services.S125GDSService;
+import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ import java.util.Optional;
  */
 @RequestMapping("/publish")
 @RestController
+@Slf4j
 public class PublishController {
 
     /**
@@ -63,16 +66,22 @@ public class PublishController {
                                               @RequestParam List<Double> bbox,
                                               @RequestBody String x125) {
         // Publish the message
-        Optional.ofNullable(x125)
-                .map(MessageBuilder::withPayload)
-                .map(builder -> {
-                    builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
-                    builder.setHeader(PubSubCustomHeaders.PUBSUB_S125_ID, atonUID);
-                    builder.setHeader(PubSubCustomHeaders.PUBSUB_BBOX, bbox.toArray(new Double[]{}));
-                    return builder;
-                })
-                .map(MessageBuilder::build)
-                .map(this.atonPublishChannel::send);
+        try {
+            Optional.of(x125)
+                    .map(MessageBuilder::withPayload)
+                    .map(builder -> {
+                        builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
+                        builder.setHeader(PubSubCustomHeaders.PUBSUB_S125_ID, atonUID);
+                        builder.setHeader(PubSubCustomHeaders.PUBSUB_BBOX, GeoJSONUtils.createGeoJSONPoint(bbox.get(0), bbox.get(1)));
+                        return builder;
+                    })
+                    .map(MessageBuilder::build)
+                    .map(this.atonPublishChannel::send);
+        } catch (NullPointerException ex) {
+            log.error(ex.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+
         // If the publication was successful, return OK
         return new ResponseEntity<String>(x125, HttpStatus.OK);
     }

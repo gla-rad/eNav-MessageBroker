@@ -16,7 +16,8 @@
 
 package org.grad.eNav.msgBroker.models;
 
-import java.util.Arrays;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.util.Objects;
 
 /**
@@ -31,7 +32,7 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
-    private Double[] bbox;
+    private JsonNode bbox;
     private String content;
 
     /**
@@ -40,13 +41,14 @@ public abstract class S100AbstractNode implements IJsonSerializable {
     public S100AbstractNode() {
 
     }
+
     /**
      * The Fully Populated Constructor.
      *
      * @param bbox          The object bounding box
      * @param content       The XML content
      */
-    public S100AbstractNode(Double[] bbox, String content) {
+    public S100AbstractNode(JsonNode bbox, String content) {
         this.bbox = bbox;
         this.content = content;
     }
@@ -74,7 +76,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @return Value of bbox.
      */
-    public Double[] getBbox() {
+    public JsonNode getBbox() {
         return bbox;
     }
 
@@ -83,7 +85,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @param bbox New value of bbox.
      */
-    public void setBbox(Double[] bbox) {
+    public void setBbox(JsonNode bbox) {
         this.bbox = bbox;
     }
 
@@ -91,17 +93,14 @@ public abstract class S100AbstractNode implements IJsonSerializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof S100AbstractNode)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         S100AbstractNode that = (S100AbstractNode) o;
-        return Arrays.equals(bbox, that.bbox) && Objects.equals(content, that.content);
+        return Objects.equals(bbox, that.bbox) && Objects.equals(content, that.content);
     }
 
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        int result = Objects.hash(content);
-        result = 31 * result + Arrays.hashCode(bbox);
-        return result;
+        return Objects.hash(bbox, content);
     }
-
 }
