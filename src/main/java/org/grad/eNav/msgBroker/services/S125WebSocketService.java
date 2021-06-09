@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
@@ -105,10 +106,9 @@ public class S125WebSocketService implements MessageHandler {
     public void handleMessage(Message<?> message) throws MessagingException {
         // Get the header and payload of the incoming message
         String endpoint = Objects.toString(message.getHeaders().get(MessageHeaders.CONTENT_TYPE));
-        Double[] coordinates = (Double[]) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX);
 
         // Check that the message type is correct
-        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0 && Optional.ofNullable(coordinates).map(c -> c.length).orElse(0) >= 2) {
+        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
             // Check that this seems ot be a valid message
             if(!(message.getPayload() instanceof String)) {
                 log.warn("Web-Socket message handler received a message with erroneous format.");
@@ -118,7 +118,7 @@ public class S125WebSocketService implements MessageHandler {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
-                    GeoJSONUtils.createGeoJSONPoint(coordinates[0], coordinates[1]),
+                    (JsonNode) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
                     (String) message.getPayload()
             );
 
