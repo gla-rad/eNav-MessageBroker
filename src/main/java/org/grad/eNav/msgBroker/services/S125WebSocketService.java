@@ -18,7 +18,7 @@ package org.grad.eNav.msgBroker.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
+import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,20 +53,20 @@ public class S125WebSocketService implements MessageHandler {
      * The General Destination Prefix
      */
     @Value("${gla.rad.msg-broker.web-socket.prefix:topic}")
-    private String prefix;
+    String prefix;
 
     /**
      * The AtoN Publish Channel to listen the AtoN messages to.
      */
     @Autowired
     @Qualifier("atonPublishChannel")
-    private PublishSubscribeChannel atonPublishChannel;
+    PublishSubscribeChannel atonPublishChannel;
 
     /**
      * Attach the web-socket as a simple messaging template
      */
     @Autowired
-    private SimpMessagingTemplate webSocket;
+    SimpMessagingTemplate webSocket;
 
     /**
      * The service post-construct operations where the handler auto-registers
@@ -114,8 +114,8 @@ public class S125WebSocketService implements MessageHandler {
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
-                    (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
-                    (JsonNode) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_BBOX.getHeader()),
                     (String) message.getPayload()
             );
 

@@ -1,14 +1,12 @@
 package org.grad.eNav.msgBroker.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.grad.eNav.msgBroker.feign.NiordClient;
-import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
+import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.services.S125GDSService;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.support.MessageBuilder;
@@ -37,19 +35,19 @@ public class PublishController {
      */
     @Autowired
     @Qualifier("atonPublishChannel")
-    private PublishSubscribeChannel atonPublishChannel;
+    PublishSubscribeChannel atonPublishChannel;
 
     /**
      * The AtoN Geomesa Data Store Service.
      */
     @Autowired
-    private S125GDSService s125GDSService;
+    S125GDSService s125GDSService;
 
     /**
      * Receives an AtoN as a REST POST request and pushes it as a publication to
      * the Geomesa Data Store.
      *
-     * @param x125      The S125 message to be published
+     * @param s125xml The S125 XML message to be published
      * @return The receive AtoN along with the HTTP response
      */
     @PostMapping(
@@ -58,15 +56,15 @@ public class PublishController {
             produces = {"application/gml+xml;charset=UTF-8"})
     public ResponseEntity<String> publishAton(@PathVariable("atonUID") String atonUID,
                                               @RequestParam List<Double> bbox,
-                                              @RequestBody String x125) {
+                                              @RequestBody String s125xml) {
         // Publish the message
         try {
-            Optional.of(x125)
+            Optional.of(s125xml)
                     .map(MessageBuilder::withPayload)
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
-                        builder.setHeader(PubSubCustomHeaders.PUBSUB_S125_ID, atonUID);
-                        builder.setHeader(PubSubCustomHeaders.PUBSUB_BBOX, GeoJSONUtils.createGeoJSONPoint(bbox.get(0), bbox.get(1)));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_BBOX.getHeader(), GeoJSONUtils.createGeoJSONPoint(bbox.get(0), bbox.get(1)));
                         return builder;
                     })
                     .map(MessageBuilder::build)
@@ -78,7 +76,7 @@ public class PublishController {
         }
 
         // If the publication was successful, return OK
-        return ResponseEntity.ok(x125);
+        return ResponseEntity.ok(s125xml);
     }
 
 }

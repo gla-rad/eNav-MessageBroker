@@ -17,19 +17,33 @@
 package org.grad.eNav.msgBroker.models;
 
 /**
- * The PubSubCustomHeaders Class
- *
- * This is a class that defines the additional custom headers for the S-124 and
- * S-125 custom headers of the publish subscribe internal messages of the
- * broker micro-service.
+ * The PubSubMsgHeaders Enum.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
-public class PubSubCustomHeaders {
+public enum PubSubMsgHeaders {
+    PUBSUB_S124_ID("PUBSUB-S124-ID"),
+    PUBSUB_S125_ID("PUBSUBS-125-ID"),
+    PUBSUB_BBOX("PUBSUB-BBOX");
 
-    // The Custom Headers
-    public static String PUBSUB_S124_ID = "PUBSUB-S124-ID";
-    public static String PUBSUB_S125_ID = "PUBSUBS-125-ID";
-    public static String PUBSUB_BBOX = "PUBSUB-BBOX";
+    // Enum Variables
+    private String header;
 
+    /**
+     * The PubSubMsgHeaders Enum Constructor.
+     *
+     * @param header        The PubSub Message header
+     */
+    PubSubMsgHeaders(String header) {
+        this.header = header;
+    }
+
+    /**
+     * Gets the PubSub Messages header.
+     *
+     * @return The PubSub Messages heade
+     */
+    public String getHeader() {
+        return header;
+    }
 }

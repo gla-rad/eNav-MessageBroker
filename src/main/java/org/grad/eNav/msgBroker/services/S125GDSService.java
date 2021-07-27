@@ -26,7 +26,7 @@ import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
 import org.grad.eNav.msgBroker.models.GeomesaS125;
-import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
+import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
 import org.opengis.feature.simple.SimpleFeature;
@@ -65,38 +65,38 @@ public class S125GDSService implements MessageHandler  {
      * The Kafka Brokers addresses.
      */
     @Value("${kafka.brokers:localhost:9092}" )
-    private String kafkaBrokers;
+    String kafkaBrokers;
 
     /**
      * The Kafka Zookeepers addresses.
      */
     @Value("${kafka.zookeepers:localhost:2181}" )
-    private String kafkaZookeepers;
+    String kafkaZookeepers;
 
     /**
      * The Number of Kafka Consumers.
      */
     @Value("${kafka.consumer.count:1}" )
-    private Integer noKafkaConsumers;
+    Integer noKafkaConsumers;
 
     /**
      * The Application Context.
      */
     @Autowired
-    private ApplicationContext applicationContext;
+    ApplicationContext applicationContext;
 
     /**
      * The AtoN Listener Properties.
      */
     @Autowired
-    private AtonListenerProperties atonListenerProperties;
+    AtonListenerProperties atonListenerProperties;
 
     /**
      * The AtoN Publish Channel to listen the AtoN messages to.
      */
     @Autowired
     @Qualifier("atonPublishChannel")
-    private PublishSubscribeChannel atonPublishChannel;
+    PublishSubscribeChannel atonPublishChannel;
 
     /**
      * The Geomesa Data Store.
@@ -150,21 +150,6 @@ public class S125GDSService implements MessageHandler  {
     }
 
     /**
-     * Creates a new schema in the provided data store. The schema is pretty
-     * much like the table in a database that will accept the row data.
-     *
-     * @param datastore     The datastore to create the schema into
-     * @param sft           The simple feature type i.e. the schema description
-     * @throws IOException IO Exception thrown while creating the data store
-     */
-    private void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
-        log.info("Creating schema: " + DataUtilities.encodeType(sft));
-        // we only need to do the once - however, calling it repeatedly is a no-op
-        datastore.createSchema(sft);
-        log.info("Schema created");
-    }
-
-    /**
      * This is a simple handler for the incoming messages. This is a generic
      * handler for any type of Spring Integration messages but it should really
      * only be used for the ones containing AtoN node payloads.
@@ -187,8 +172,8 @@ public class S125GDSService implements MessageHandler  {
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
-                    (String) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_S125_ID),
-                    (JsonNode) message.getHeaders().get(PubSubCustomHeaders.PUBSUB_BBOX),
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_BBOX.getHeader()),
                     (String) message.getPayload()
             );
 
@@ -198,12 +183,27 @@ public class S125GDSService implements MessageHandler  {
     }
 
     /**
+     * Creates a new schema in the provided data store. The schema is pretty
+     * much like the table in a database that will accept the row data.
+     *
+     * @param datastore     The datastore to create the schema into
+     * @param sft           The simple feature type i.e. the schema description
+     * @throws IOException IO Exception thrown while creating the data store
+     */
+    protected void createSchema(DataStore datastore, SimpleFeatureType sft) throws IOException {
+        log.info("Creating schema: " + DataUtilities.encodeType(sft));
+        // we only need to do the once - however, calling it repeatedly is a no-op
+        datastore.createSchema(sft);
+        log.info("Schema created");
+    }
+
+    /**
      * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
      * this only supports the Kafka Message Streams.
      *
      * @param s125Node          The S-125 node to be pushed into the datastore
      */
-    private void pushAton(S125Node s125Node) {
+    protected void pushAton(S125Node s125Node) {
         // We need a valid producer to push the AtoN to
         if(this.producer == null) {
             throw new ValidationException("No valid Geomesa Data Store producer detected.");
@@ -231,7 +231,7 @@ public class S125GDSService implements MessageHandler  {
      * @param features      The list of features to be written to the data store
      * @throws IOException IO Exception thrown while writing into the data store
      */
-    private void writeFeatures(SimpleFeatureStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
+    protected void writeFeatures(SimpleFeatureStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
         datastore.addFeatures(new ListFeatureCollection(sft, features));
     }
 

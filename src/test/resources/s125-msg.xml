@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns5:DataSet xmlns:ns1="http://www.opengis.net/gml/3.2" xmlns:ns2="http://www.iho.int/s100gml/1.0" xmlns:ns4="http://www.w3.org/1999/xlink" xmlns:ns5="http://www.iho.int/S125/gml/0.1" ns1:id="aton.uk.test_aton">
+    <ns1:boundedBy>
+        <ns1:Envelope srsName="EPSG:4326">
+            <ns1:lowerCorner>53.61 1.594</ns1:lowerCorner>
+            <ns1:upperCorner>53.61 1.594</ns1:upperCorner>
+        </ns1:Envelope>
+    </ns1:boundedBy>
+    <member>
+        <ns5:S125_NavAidStructure>
+            <ns1:boundedBy xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <featureName>
+                <name>Test AtoN</name>
+            </featureName>
+            <geometry>
+                <ns2:pointProperty>
+                    <ns2:Point>
+                        <ns1:pos>53.61 1.594</ns1:pos>
+                    </ns2:Point>
+                </ns2:pointProperty>
+            </geometry>
+            <mmsi>123456789</mmsi>
+            <atonType>Special Mark</atonType>
+            <deploymentType>Mobile</deploymentType>
+            <raimFlag>false</raimFlag>
+            <vatonFlag>true</vatonFlag>
+        </ns5:S125_NavAidStructure>
+    </member>
+</ns5:DataSet>
