@@ -1,0 +1,56 @@
+<!--
+  ~ Copyright (c) 2020 - Department of Research & Development
+  ~ General Lighthouse Authorities of the UK and Ireland's.
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in
+  ~ all copies or substantial portions of the Software.
+  -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <th:block th:include="fragments/general.html :: headerfiles"></th:block>
+    </head>
+    <body>
+        <div class="d-flex flex-column vh-100">
+            <div th:replace="fragments/general.html :: navbar"></div>
+            <div class="flex-fill flex-grow-1 flex-shrink-0">
+                <div id="main-content" class="container mt-3">
+                    <div class="card shadow" sec:authorize="isAuthenticated()">
+                        <div class="card-header">
+                            <h2>Message Broker Information</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="row p-1">
+                                <h5>Name:</h5>&nbsp
+                                <span>[[${appName}]]</span>
+                            </div>
+                            <div class="row p-1">
+                                <h5>Version:</h5>&nbsp
+                                <span>[[${appVersion}]]</span>
+                            </div>
+                            <div class="row p-1">
+                                <h5>Operator Name:</h5>&nbsp
+                                <span>[[${appOperatorName}]]</span>
+                            </div>
+                            <div class="row p-1">
+                                <h5>Contact:</h5>&nbsp
+                                <span>[[${appOperatorContact}]]</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="fragments/general.html :: footer"></div>
+        </div>
+        <script th:src="@{/webjars/jquery/jquery.min.js}"></script>
+        <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    </body>
+</html>

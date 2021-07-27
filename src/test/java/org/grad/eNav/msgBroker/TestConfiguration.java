@@ -3,14 +3,19 @@ package org.grad.eNav.msgBroker;
 import org.geotools.data.DataStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import javax.security.auth.message.config.RegistrationListener;
 
 import static org.mockito.Mockito.mock;
 
 /**
- * The type Test configuration.
+ * This is a test only configuration that will get activated when the "test"
+ * profile is active.
+ *
+ * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
+@Profile("test")
 @Configuration
 public class TestConfiguration {
 

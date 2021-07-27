@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 public class InternalServerErrorException extends RuntimeException implements AbstractException {
 
-
     /**
      * The Field errors.
      */

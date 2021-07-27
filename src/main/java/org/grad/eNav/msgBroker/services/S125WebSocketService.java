@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.models.PubSubCustomHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
-import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,12 +31,10 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.expression.Arrays;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * The AtonWebSocketService Class

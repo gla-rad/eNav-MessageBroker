@@ -16,7 +16,7 @@
 
 package org.grad.eNav.msgBroker.config;
 
-import org.grad.eNav.msgBroker.utils.PubSubErrorHandler;
+import org.grad.eNav.msgBroker.components.PubSubErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.PublishSubscribeChannel;

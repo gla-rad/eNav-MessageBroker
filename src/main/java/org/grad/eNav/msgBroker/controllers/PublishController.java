@@ -33,12 +33,6 @@ import java.util.Optional;
 public class PublishController {
 
     /**
-     * The Niord Client.
-     */
-    @Autowired
-    private NiordClient niordClient;
-
-    /**
      * The AtoN Data Channel to publish the incoming data to.
      */
     @Autowired
@@ -79,10 +73,12 @@ public class PublishController {
                     .map(this.atonPublishChannel::send);
         } catch (NullPointerException ex) {
             log.error(ex.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .build();
         }
 
         // If the publication was successful, return OK
-        return new ResponseEntity<String>(x125, HttpStatus.OK);
+        return ResponseEntity.ok(x125);
     }
+
 }

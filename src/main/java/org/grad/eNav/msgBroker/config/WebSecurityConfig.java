@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
@@ -56,6 +57,7 @@ import java.security.Principal;
 @Configuration
 @EnableWebSecurity
 @ComponentScan(basePackageClasses = KeycloakSecurityComponents.class)
+@ConditionalOnProperty(value = "keycloak.enabled", matchIfMissing = true)
 class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
 
     /**
@@ -148,10 +150,10 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 //Saves on validation requests.
                 .ignoring()
                 .antMatchers(
-                    "/webjars/**",  //bootstrap
-                    "/css/**",                  //css files
-                    "/js/**",                   //js files
-                    "/favicon.ico"              //the favicon
+                        "/webjars/**",  //bootstrap
+                        "/css/**",          //css files
+                        "/images/**",       //the images
+                        "/src/**"           //the javascript sources
                 );
     }
 
@@ -172,9 +174,9 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers(
                         "/webjars/**",   //bootstrap
-                        "/js/**", 				    //js files
-                        "/css/**", 				    //css files
-                        "/favicon.ico"              //the favicon
+                        "/css/**",          //css files
+                        "/images/**",       //the images
+                        "/src/**"           //the javascript sources
                 ).permitAll()
                 .requestMatchers(EndpointRequest.to( //
                         InfoEndpoint.class,         //info endpoints

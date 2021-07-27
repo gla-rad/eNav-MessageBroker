@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 public class ValidationException extends RuntimeException implements AbstractException {
 
-
     /**
      * The Field errors.
      */
