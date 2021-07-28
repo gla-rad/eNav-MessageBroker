@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The AtoN Geomesa Data Store Service.
+ * The S125 Geomesa Data Store Service Class
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */

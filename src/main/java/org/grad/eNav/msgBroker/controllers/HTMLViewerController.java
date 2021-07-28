@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
- * The Home Viewer Controller.
+ * The Home Viewer Controller Class
  *
  * This is the home controller that allows user to view the main options.
  *

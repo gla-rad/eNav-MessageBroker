@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The AtoN Controller.
+ * The AtoN Controller Class
  *
  * This is the home controller that allows other microservices to publish new or
  * edited information (such as AtoNs) into the message broker for everybody else

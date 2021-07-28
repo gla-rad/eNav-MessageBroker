@@ -37,7 +37,7 @@ import javax.annotation.PreDestroy;
 import java.util.Objects;
 
 /**
- * The AtonWebSocketService Class
+ * The S125 Web-Socket Service Class
  *
  * This class implements a handler for the AtoN messages coming into a Spring
  * Integration channel. It basically just publishes them to another channel,

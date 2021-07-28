@@ -39,6 +39,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
@@ -91,6 +92,30 @@ class S125WebSocketServiceTest {
 
         // Also set the web-socket service topic prefix
         this.s125WebSocketService.prefix = "topic";
+    }
+
+    /**
+     * Test that the S125 web-socket service gets initialised correctly,
+     * and it subscribes to the AtoN publish subscribe channel.
+     */
+    @Test
+    void testInit() {
+        // Perform the service call
+        this.s125WebSocketService.init();
+
+        verify(this.atonPublishChannel, times(1)).subscribe(this.s125WebSocketService);
+    }
+
+    /**
+     * Test that the S125 web-socket service gets destroyed correctly,
+     * and it un-subscribes from the AtoN publish subscribe channel.
+     */
+    @Test
+    void testDestroy() {
+        // Perform the service call
+        this.s125WebSocketService.destroy();
+
+        verify(this.atonPublishChannel, times(1)).destroy();
     }
 
     /**
