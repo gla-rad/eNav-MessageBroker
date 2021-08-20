@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The AtoN Controller Class
+ * The Publish Controller Class
  *
  * This is the home controller that allows other microservices to publish new or
  * edited information (such as AtoNs) into the message broker for everybody else
@@ -41,8 +41,8 @@ import java.util.Optional;
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
-@RequestMapping("/publish")
 @RestController
+@RequestMapping("/publish")
 @Slf4j
 public class PublishController {
 
