@@ -50,7 +50,7 @@
     <body>
         <div th:fragment="navbar">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-                <span class="navbar-brand mb-0 h1">e-Nav Message Broker</span>
+                <span class="navbar-brand mb-0 h1">e-Nav [[${appName}]]</span>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
                         aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -86,7 +86,7 @@
         <p>Checkout fragments in action!</p>
         <div th:fragment="login-card" class="card shadow" sec:authorize="!isAuthenticated()">
             <div class="card-header">
-                <h2>Welcome to the MCP Service Registry</h2>
+                <h2>Welcome to the [[${appName}]]</h2>
             </div>
             <div class="card-body">
                 <div class="row">

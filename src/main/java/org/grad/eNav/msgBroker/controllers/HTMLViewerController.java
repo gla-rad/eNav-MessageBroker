@@ -87,6 +87,7 @@ public class HTMLViewerController {
                 .stream()
                 .map(PublicationType::getType)
                 .collect(Collectors.toList()));
+        model.addAttribute("appName", this.appName);
         model.addAttribute("appOperatorUrl", this.appOperatorUrl);
         model.addAttribute("appCopyright", this.appCopyright);
         // Return the rendered index
