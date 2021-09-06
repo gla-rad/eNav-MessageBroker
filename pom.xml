@@ -20,11 +20,14 @@
 		<spring-cloud.version>Hoxton.SR8</spring-cloud.version>
 		<keycloak.version>12.0.1</keycloak.version>
 		<springdoc.version>1.5.10</springdoc.version>
-		<geomesa.version>3.1.0</geomesa.version>
-		<scala.abi.version>2.11</scala.abi.version>
-		<scala.version>2.11.7</scala.version>
-		<zookeeper.version>3.4.14</zookeeper.version>
-		<kafka.version>2.1.1</kafka.version>
+		<bootstrap.version>5.1.0</bootstrap.version>
+		<jquery.version>3.5.1</jquery.version>
+		<fa.version>5.11.2</fa.version>
+		<geomesa.version>3.2.0</geomesa.version>
+		<scala.abi.version>2.12</scala.abi.version>
+		<scala.version>2.12.6</scala.version>
+		<zookeeper.version>3.5.9</zookeeper.version>
+		<kafka.version>2.8.0</kafka.version>
 	</properties>
 
 	<build>
@@ -167,17 +170,17 @@
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>bootstrap</artifactId>
-			<version>4.5.2</version>
+			<version>${bootstrap.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>jquery</artifactId>
-			<version>3.1.1-1</version>
+			<version>${jquery.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>font-awesome</artifactId>
-			<version>5.11.2</version>
+			<version>${fa.version}</version>
 		</dependency>
 
 		<dependency>
