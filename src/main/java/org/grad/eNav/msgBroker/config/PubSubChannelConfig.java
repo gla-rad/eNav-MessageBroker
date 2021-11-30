@@ -39,10 +39,23 @@ public class PubSubChannelConfig {
      * Defining a publish subscribe Spring Integration channel to exchange
      * the incoming AtoN data between the application components.
      *
-     * @return The publish subscribe message channel
+     * @return The publish subscribe AtoN message channel
      */
     @Bean
     public PublishSubscribeChannel atonPublishChannel() {
+        PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel();
+        pubsubChannel.setErrorHandler(new PubSubErrorHandler());
+        return pubsubChannel;
+    }
+
+    /**
+     * Defining a publish subscribe Spring Integration channel to exchange
+     * the AtoN deletions between the application components.
+     *
+     * @return The publish subscribe AtoN delete channel
+     */
+    @Bean
+    public PublishSubscribeChannel atonDeleteChannel() {
         PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel();
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;

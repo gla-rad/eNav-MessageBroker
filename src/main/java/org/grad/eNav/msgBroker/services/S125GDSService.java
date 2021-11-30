@@ -22,6 +22,8 @@ import org.geotools.data.DataStore;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.filter.text.cql2.CQLException;
+import org.geotools.filter.text.ecql.ECQL;
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
@@ -31,6 +33,7 @@ import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.Filter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,11 +95,18 @@ public class S125GDSService implements MessageHandler  {
     AtonListenerProperties atonListenerProperties;
 
     /**
-     * The AtoN Publish Channel to listen the AtoN messages to.
+     * The AtoN Publish Channel to listen to the AtoN messages.
      */
     @Autowired
     @Qualifier("atonPublishChannel")
     PublishSubscribeChannel atonPublishChannel;
+
+    /**
+     * The AtoN Delete Channel to listen to the AtoN message deletions.
+     */
+    @Autowired
+    @Qualifier("atonDeleteChannel")
+    PublishSubscribeChannel atonDeleteChannel;
 
     /**
      * The Geomesa Data Store.
@@ -133,7 +143,8 @@ public class S125GDSService implements MessageHandler  {
         }
 
         // Register a new listeners to the data channels
-        atonPublishChannel.subscribe(this);
+        this.atonPublishChannel.subscribe(this);
+        this.atonDeleteChannel.subscribe(this);
     }
 
     /**
@@ -146,6 +157,9 @@ public class S125GDSService implements MessageHandler  {
         this.producer.dispose();
         if(this.atonPublishChannel != null) {
             this.atonPublishChannel.destroy();
+        }
+        if(this.atonDeleteChannel != null) {
+            this.atonDeleteChannel.destroy();
         }
     }
 
@@ -179,6 +193,8 @@ public class S125GDSService implements MessageHandler  {
 
             // Now push the aton node down the Geomesa Data Store
             this.pushAton(s125Node);
+        } else if(endpoint.compareTo(PublicationType.ATON_DEL.getType()) == 0) {
+            this.deleteAton((String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()));
         }
     }
 
@@ -198,7 +214,7 @@ public class S125GDSService implements MessageHandler  {
     }
 
     /**
-     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently
+     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently,
      * this only supports the Kafka Message Streams.
      *
      * @param s125Node          The S-125 node to be pushed into the datastore
@@ -222,9 +238,34 @@ public class S125GDSService implements MessageHandler  {
     }
 
     /**
+     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently,
+     * this only supports the Kafka Message Streams. Also in the used Geomesa
+     * implementation (3.3.0 in the time of writing) only ID filtering is
+     * supporting for the feature removals, so geometry has to stay out for
+     * the time being.
+     *
+     * @param atonUid           The AtoN UID to be deleted from the datastore
+     */
+    protected void deleteAton(String atonUid) {
+        // We need a valid producer to push the AtoN to
+        if(this.producer == null) {
+            throw new ValidationException("No valid Geomesa Data Store producer detected.");
+        }
+
+        // Translate the AtoNs UID to the Geomesa ECQl filters
+        try {
+            this.deleteFeatures(this.featureStore,
+                    ECQL.toFilter("id in ('" + atonUid + "')" ));
+        } catch (CQLException | IOException e) {
+            log.error(e.getMessage());
+            throw new InternalServerErrorException(e.getMessage());
+        }
+    }
+
+    /**
      * A generic function that writes the provided data into the datastore
      * schema, based on the provided simple feature type. The list of features
-     * are generic points of interest that will be send to the data store.
+     * are generic points of interest that will be sent to the data store.
      *
      * @param datastore     The datastore to write the feature into
      * @param sft           The simple feature type
@@ -233,6 +274,18 @@ public class S125GDSService implements MessageHandler  {
      */
     protected void writeFeatures(SimpleFeatureStore datastore, SimpleFeatureType sft, List<SimpleFeature> features) throws IOException {
         datastore.addFeatures(new ListFeatureCollection(sft, features));
+    }
+
+    /**
+     * A generic function that deletes the selected data entries from the
+     * datastore schema, based on the provided filter.
+     *
+     * @param datastore     The datastore to write the feature into
+     * @param filter        The filter to delete the data for
+     * @throws IOException IO Exception thrown while writing into the data store
+     */
+    protected void deleteFeatures(SimpleFeatureStore datastore, Filter filter) throws IOException {
+        datastore.removeFeatures(filter);
     }
 
 }

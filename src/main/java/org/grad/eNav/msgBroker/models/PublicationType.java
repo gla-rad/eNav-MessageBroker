@@ -26,8 +26,11 @@ package org.grad.eNav.msgBroker.models;
  */
 public enum PublicationType {
     ATON("aton"),
+    ATON_DEL("aton-delete"),
     NAVIGATION_MESSAGE("navigation-message"),
-    NAVIGATION_WARNING("navigation-warning");
+    NAVIGATION_MESSAGE_DEL("navigation-message-delete"),
+    NAVIGATION_WARNING("navigation-warning"),
+    NAVIGATION_WARNING_DEL("navigation-warning-delete");
 
     /**
      * The Publication Type string representation.
