@@ -46,6 +46,20 @@
                 display: none;
             }
         </style>
+        <script>
+            /**
+             * Once authenticated, the OpenID connection token expires regularly
+             * and our AJAX calls will be rejected. To handle that in a simple
+             * way, we can just reload the current page in regular intervals.
+             */
+            function refreshSession() {
+                setTimeout(() => {
+                    if(document.getElementById('sessionRefresher')) {
+                        document.getElementById('sessionRefresher').src = document.getElementById('sessionRefresher').src;
+                    }
+                }, 90000);
+            }
+        </script>
     </head>
     <body>
         <div th:fragment="navbar">
