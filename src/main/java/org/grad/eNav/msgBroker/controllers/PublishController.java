@@ -47,11 +47,18 @@ import java.util.Optional;
 public class PublishController {
 
     /**
-     * The AtoN Data Channel to publish the incoming data to.
+     * The AtoN Publish Channel to publish the incoming AtoN messages to.
      */
     @Autowired
     @Qualifier("atonPublishChannel")
     PublishSubscribeChannel atonPublishChannel;
+
+    /**
+     * The AtoN Delete Channel to publish the incoming AtoN message deletions to.
+     */
+    @Autowired
+    @Qualifier("atonDeleteChannel")
+    PublishSubscribeChannel atonDeleteChannel;
 
     /**
      * The AtoN Geomesa Data Store Service.
@@ -63,7 +70,9 @@ public class PublishController {
      * Receives an AtoN as a REST POST request and pushes it as a publication to
      * the Geomesa Data Store.
      *
-     * @param s125xml The S125 XML message to be published
+     * @param atonUID   The S125 AtoN UID to be published
+     * @param bbox      The bounding box to publish the S125 for
+     * @param s125xml   The S125 XML message to be published
      * @return The receive AtoN along with the HTTP response
      */
     @PostMapping(
@@ -73,7 +82,7 @@ public class PublishController {
     public ResponseEntity<String> publishAton(@PathVariable("atonUID") String atonUID,
                                               @RequestParam List<Double> bbox,
                                               @RequestBody String s125xml) {
-        // Publish the message
+        // Publish the AtoN message
         try {
             Optional.of(s125xml)
                     .map(MessageBuilder::withPayload)
@@ -93,6 +102,30 @@ public class PublishController {
 
         // If the publication was successful, return OK
         return ResponseEntity.ok(s125xml);
+    }
+
+    /**
+     * Receives an AtoN UID as a REST DELETE request and forwards it as a
+     * publication deletion from the Geomesa Data Store.
+     *
+     * @param atonUID   The S125 AtoN UID to be deleted
+     * @return The receive AtoN along with the HTTP response
+     */
+    @DeleteMapping(value = "/atons/{atonUID}")
+    public ResponseEntity<String> deleteAton(@PathVariable("atonUID") String atonUID) {
+        // Publish the AtoN deletion message
+        Optional.of("Deletion")
+                .map(MessageBuilder::withPayload)
+                .map(builder -> {
+                    builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType());
+                    builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
+                    return builder;
+                })
+                .map(MessageBuilder::build)
+                .map(this.atonDeleteChannel::send);
+
+        // If the publication was successful, return OK
+        return ResponseEntity.ok().build();
     }
 
 }

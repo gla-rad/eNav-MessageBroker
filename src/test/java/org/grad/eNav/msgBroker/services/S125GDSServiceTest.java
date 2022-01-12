@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.DataStore;
 import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.filter.text.cql2.CQLException;
+import org.geotools.filter.text.ecql.ECQL;
 import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.models.GeomesaS125;
@@ -35,6 +37,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.opengis.filter.Filter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.integration.channel.PublishSubscribeChannel;
@@ -76,10 +80,18 @@ class S125GDSServiceTest {
     AtonListenerProperties atonListenerProperties;
 
     /**
-     * The AtoN Publish Channel mock.
+     * The AtoN Publish Channel mock to listen to the AtoN messages.
      */
     @Mock
+    @Qualifier("atonPublishChannel")
     PublishSubscribeChannel atonPublishChannel;
+
+    /**
+     * The AtoN Delete Channel mock to listen to the AtoN message deletions.
+     */
+    @Mock
+    @Qualifier("atonDeleteChannel")
+    PublishSubscribeChannel atonDeleteChannel;
 
     /**
      * The Geomesa Data Store mock.
@@ -124,6 +136,7 @@ class S125GDSServiceTest {
 
         // Verify that the service subscribed to the AtoN publish subscribe channel
         verify(this.atonPublishChannel, times(1)).subscribe(this.s125GDSService);
+        verify(this.atonDeleteChannel, times(1)).subscribe(this.s125GDSService);
     }
 
     /**
@@ -140,6 +153,7 @@ class S125GDSServiceTest {
 
         // Verify that the service did NOT subscribe to the AtoN publish subscribe channel
         verify(this.atonPublishChannel, never()).subscribe(this.s125GDSService);
+        verify(this.atonDeleteChannel, never()).subscribe(this.s125GDSService);
     }
 
     /**
@@ -155,6 +169,7 @@ class S125GDSServiceTest {
         // Verify that the service shuts down gracefully
         verify(this.producer, times(1)).dispose();
         verify(this.atonPublishChannel, times(1)).destroy();
+        verify(this.atonDeleteChannel, times(1)).destroy();
     }
 
     /**
@@ -162,7 +177,7 @@ class S125GDSServiceTest {
      * AtoN messages published in the AtoN publish-subscribe channel.
      */
     @Test
-    void testHandleMessage() {
+    void testHandleMessageAton() {
         doNothing().when(this.s125GDSService).pushAton(any());
 
         // Create a message to be handled
@@ -188,7 +203,7 @@ class S125GDSServiceTest {
      * Test that we can only send S125 messages down to the Geomesa Datastore.
      */
     @Test
-    void testHandleMessageWrongPayload() {
+    void testHandleMessageAtonWrongPayload() {
         // Create a message to be handled
         Message message = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
@@ -202,6 +217,33 @@ class S125GDSServiceTest {
 
         // Verify that we send a packet to the VDES port and get that packet
         verify(this.s125GDSService, never()).pushAton(any());
+    }
+
+    /**
+     * Test that the S125 Geomesa Datastore service can process correctly the
+     * AtoN deletion messages published in the AtoN deletion publish-subscribe
+     * channel.
+     */
+    @Test
+    void testHandleMessageAtonDelete() {
+        doNothing().when(this.s125GDSService).deleteAton(any());
+
+        // Create a message to be handled
+        Message message = Optional.of("Deletion").map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(MessageBuilder::build)
+                .orElse(null);
+
+        // Perform the service call
+        this.s125GDSService.handleMessage(message);
+
+        // Verify that we send a packet to the VDES port and get that packet
+        ArgumentCaptor<String> atonUidArgument = ArgumentCaptor.forClass(String.class);
+        verify(this.s125GDSService, times(1)).deleteAton(atonUidArgument.capture());
+
+        // Verify the packet
+        assertEquals(this.s125Node.getAtonUID(), atonUidArgument.getValue());
     }
 
     /**
@@ -238,6 +280,37 @@ class S125GDSServiceTest {
     }
 
     /**
+     * Test that when the Geomesa Datastore service deletes an AtoN from the
+     * Kafka datastore, the datastore delete feature function will be called.
+     */
+    @Test
+    void testDeleteAton() throws IOException, CQLException {
+        doNothing().when(this.s125GDSService).deleteFeatures(any(), any());
+
+        // Perform the service call
+        this.s125GDSService.deleteAton(this.s125Node.getAtonUID());
+
+        // Assert that the AtoN UID will be used to delete the matching features
+        // from the datastore
+        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s125Node.getAtonUID() + "')" ));
+    }
+
+    /**
+     * Test that when the Geomesa Datastore service deletes an AtoN UID from the
+     * Kafka datastore, if an error is raised, an InternalServerErrorException
+     * will be thrown.
+     */
+    @Test
+    void testDeleteAtonError() throws IOException, CQLException {
+        doThrow(IOException.class).when(this.s125GDSService).deleteFeatures(any(), any());
+
+        // Perform the service call
+        assertThrows(InternalServerErrorException.class, () ->
+                this.s125GDSService.deleteAton(this.s125Node.getAtonUID())
+        );
+    }
+
+    /**
      * Test that the S125 Geomesa Datastore service can write the incoming
      * messages as features to the respective datastore correctly.
      */
@@ -255,5 +328,21 @@ class S125GDSServiceTest {
 
         // Verify that the provided features were added to the datastore
         verify(this.simpleFeatureStore, times(1)).addFeatures(any());
+    }
+
+    /**
+     * Test that the S125 Geomesa Datastore service can delete published
+     * messages as features from the respective datastore correctly.
+     */
+    @Test
+    void testDeleteFeatures() throws IOException {
+        // Perform the service class
+        this.s125GDSService.deleteFeatures(
+                this.simpleFeatureStore,
+                mock(Filter.class)
+        );
+
+        // Verify that the provided features were added to the datastore
+        verify(this.simpleFeatureStore, times(1)).removeFeatures(any());
     }
 }

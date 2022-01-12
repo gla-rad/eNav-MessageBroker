@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,11 +54,18 @@ class PublishControllerTest {
     MockMvc mockMvc;
 
     /**
-     * The AtoN Data Channel mock.
+     * The AtoN Publish Channel mock to publish the incoming AtoN messages to.
      */
     @MockBean
     @Qualifier("atonPublishChannel")
     PublishSubscribeChannel atonPublishChannel;
+
+    /**
+     * The AtoN Delete Channel mock to publish the incoming AtoN message deletions to.
+     */
+    @MockBean
+    @Qualifier("atonDeleteChannel")
+    PublishSubscribeChannel atonDeleteChannel;
 
     /**
      * The S125 Geomesa Datastore Service mock.
@@ -109,6 +117,18 @@ class PublishControllerTest {
                 .contentType("application/gml+xml;charset=UTF-8")
                 .param("bbox", "53.61, 1.594"))
                 .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * Test that we can publish an AtoN UID to the application's AtoN delete
+     * subscribe channel by accessing the "publish/atons/{atonUID}" endpoint.
+     */
+    @Test
+    void testDeleteAton() throws Exception {
+        // Perform the MVC request
+        MvcResult mvcResult = this.mockMvc.perform(delete("/publish/atons/{atonUID}", "aton.uk.test_aton"))
+                .andExpect(status().isOk())
+                .andReturn();
     }
 
 }
