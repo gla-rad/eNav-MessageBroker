@@ -176,7 +176,8 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                         "/webjars/**",   //bootstrap
                         "/css/**",          //css files
                         "/images/**",       //the images
-                        "/src/**"           //the javascript sources
+                        "/src/**",           //the javascript sources
+                        "/", "/index"       // The main index page
                 ).permitAll()
                 .requestMatchers(EndpointRequest.to( //
                         InfoEndpoint.class,         //info endpoints

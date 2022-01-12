@@ -80,7 +80,7 @@ public class HTMLViewerController {
      * @param model The application UI model
      * @return The index page
      */
-    @GetMapping("/index.html")
+    @GetMapping("/index")
     public String index(Model model) {
         // Add the properties to the UI model
         model.addAttribute("endpoints", Arrays.asList(PublicationType.values())
@@ -109,6 +109,17 @@ public class HTMLViewerController {
         model.addAttribute("appOperatorUrl", this.appOperatorUrl);
         model.addAttribute("appCopyright", this.appCopyright);
         return "about";
+    }
+
+    /**
+     * The refresh session page of the VDES Controller Application.
+     *
+     * @param model The application UI model
+     * @return The refresh session page
+     */
+    @GetMapping("/refresh")
+    public String refresh(Model model) {
+        return "refresh";
     }
 
     /**
