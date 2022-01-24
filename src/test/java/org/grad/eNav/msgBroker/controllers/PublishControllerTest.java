@@ -17,19 +17,18 @@
 package org.grad.eNav.msgBroker.controllers;
 
 import org.apache.commons.io.IOUtils;
+import org.grad.eNav.msgBroker.TestingConfiguration;
 import org.grad.eNav.msgBroker.services.S125GDSService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.integration.channel.PublishSubscribeChannel;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -42,9 +41,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ActiveProfiles("test")
-@RunWith(SpringRunner.class)
 @WebMvcTest(controllers = PublishController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
+@Import(TestingConfiguration.class)
 class PublishControllerTest {
 
     /**

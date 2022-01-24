@@ -17,9 +17,8 @@
 package org.grad.eNav.msgBroker;
 
 import org.geotools.data.DataStore;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 import javax.security.auth.message.config.RegistrationListener;
 
@@ -31,9 +30,8 @@ import static org.mockito.Mockito.mock;
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
-@Profile("test")
-@Configuration
-public class TestConfiguration {
+@TestConfiguration
+public class TestingConfiguration {
 
 	/**
 	 * Feign depends on the Eureka Registration Listener bean so let's mock one

@@ -18,13 +18,11 @@ package org.grad.eNav.msgBroker;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.context.annotation.Import;
 
-@ActiveProfiles("test")
 @SpringBootTest
-@TestPropertySource("classpath:application.properties")
-class MessageBrokerTests {
+@Import(TestingConfiguration.class)
+class MessageBrokerTest {
 
 	@Test
 	void contextLoads() {
