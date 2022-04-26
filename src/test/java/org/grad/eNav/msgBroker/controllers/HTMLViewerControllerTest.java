@@ -60,15 +60,4 @@ class HTMLViewerControllerTest {
                 .andExpect(status().isOk());
     }
 
-    /**
-     * Test that we can access the refresh session HTML page.
-     */
-    @Test
-    void testGetRefresh() throws Exception {
-        // Perform the MVC request
-        this.mockMvc.perform(get("/refresh")
-                        .contentType(MediaType.TEXT_HTML))
-                .andExpect(status().isOk());
-    }
-
 }
