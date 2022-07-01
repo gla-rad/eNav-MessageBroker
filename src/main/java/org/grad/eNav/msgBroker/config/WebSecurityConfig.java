@@ -18,7 +18,6 @@ package org.grad.eNav.msgBroker.config;
 
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
-import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.KeycloakSecurityComponents;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
@@ -87,7 +86,7 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
      */
     @Bean
     protected FilterRegistrationBean<ForwardedHeaderFilter> forwardedHeaderFilter() {
-        final FilterRegistrationBean<ForwardedHeaderFilter> filterRegistrationBean = new FilterRegistrationBean();
+        final FilterRegistrationBean<ForwardedHeaderFilter> filterRegistrationBean = new FilterRegistrationBean<>();
         filterRegistrationBean.setFilter(new ForwardedHeaderFilter());
         filterRegistrationBean.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.ERROR);
         filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
@@ -139,6 +138,7 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/webjars/**",  //bootstrap
                         "/css/**",          //css files
+                        "/lib/**",          //js files
                         "/images/**",       //the images
                         "/src/**"           //the javascript sources
                 );
@@ -162,11 +162,12 @@ class WebSecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
                 .antMatchers(
                         "/webjars/**",   //bootstrap
                         "/css/**",          //css files
+                        "/lib/**",          //js files
                         "/images/**",       //the images
-                        "/src/**",           //the javascript sources
+                        "/src/**",          //the javascript sources
                         "/", "/index"       // The main index page
                 ).permitAll()
-                .requestMatchers(EndpointRequest.to( //
+                .requestMatchers(EndpointRequest.to(
                         InfoEndpoint.class,         //info endpoints
                         HealthEndpoint.class        //health endpoints
                 )).permitAll()
