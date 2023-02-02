@@ -20,7 +20,7 @@ import org.geotools.data.DataStore;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
-import javax.security.auth.message.config.RegistrationListener;
+import jakarta.security.auth.message.config.RegistrationListener;
 
 import static org.mockito.Mockito.mock;
 
