@@ -64,8 +64,8 @@ class SpringSecurityConfig {
     /**
      * The default application name.
      */
-    @Value("${spring.application.name:msg-broker}")
-    private String appName;
+    @Value("${keycloak.clientId:msg-broker}")
+    private String clientId;
 
     /**
      * The default application name.
@@ -124,7 +124,7 @@ class SpringSecurityConfig {
      */
     @Bean
     Converter<Jwt, ? extends AbstractAuthenticationToken> keycloakJwtAuthenticationConverter() {
-        return new KeycloakJwtAuthenticationConverter(appName);
+        return new KeycloakJwtAuthenticationConverter(this.clientId);
     }
 
     /**
@@ -134,7 +134,7 @@ class SpringSecurityConfig {
      */
     @Bean
     protected GrantedAuthoritiesMapper keycloakGrantedAuthoritiesMapper() {
-        return new KeycloakGrantedAuthoritiesMapper(this.appName);
+        return new KeycloakGrantedAuthoritiesMapper(this.clientId);
     }
 
     /**
