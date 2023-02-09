@@ -17,7 +17,9 @@
 package org.grad.eNav.msgBroker.config;
 
 import jakarta.servlet.DispatcherType;
-import org.grad.eNav.msgBroker.utils.KeycloakJwtAuthenticationConverter;
+import org.grad.eNav.msgBroker.config.keycloak.KeycloakGrantedAuthoritiesMapper;
+import org.grad.eNav.msgBroker.config.keycloak.KeycloakJwtAuthenticationConverter;
+import org.grad.eNav.msgBroker.config.keycloak.KeycloakLogoutHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -33,16 +35,23 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 /**
- * The Spring Security Configuration.
+ * The Web Security Configuration.
+ *
+ * This is the security definition for the security configuration and the filter
+ * chains the service.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
@@ -63,6 +72,16 @@ class SpringSecurityConfig {
      */
     @Value("${gla.rad.msg-broker.resources.open:/,/index,/webjars/**,/css/**,/lib/**,/images/**,/src/**}")
     private String[] openResources;
+
+    /**
+     * The REST Template.
+     *
+     * @return the REST template
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 
     /**
      * Define a slightly more flexible HTTP Firewall configuration that allows
@@ -109,6 +128,38 @@ class SpringSecurityConfig {
     }
 
     /**
+     * Specify a mapper for the keycloak authority claims.
+     *
+     * @return the Keycloak Granted Authority Mapper
+     */
+    @Bean
+    protected GrantedAuthoritiesMapper keycloakGrantedAuthoritiesMapper() {
+        return new KeycloakGrantedAuthoritiesMapper(this.appName);
+    }
+
+    /**
+     * Define a logout handler for handling Keycloak logouts.
+     *
+     * @param restTemplate the REST template
+     * @return the Keycloak logout handler
+     */
+    @Bean
+    protected KeycloakLogoutHandler keycloakLogoutHandler(RestTemplate restTemplate) {
+        return new KeycloakLogoutHandler(restTemplate);
+    }
+
+    /**
+     * Define the session authentication strategy which uses a simple session
+     * registry to store our current sessions.
+     *
+     * @return the session authentication strategy
+     */
+    @Bean
+    protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+        return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
+    }
+
+    /**
      * Defines the security web-filter chains.
      *
      * Allows open access to the health and info actuator endpoints.
@@ -118,18 +169,20 @@ class SpringSecurityConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+                                           ClientRegistrationRepository clientRegistrationRepository,
+                                           RestTemplate restTemplate) throws Exception {
         // Authenticate through configured OpenID Provider
         http.oauth2Login()
                 .loginPage("/oauth2/authorization/keycloak");
 //                .authorizationEndpoint().baseUri("/oauth2/authorization/keycloak")
 //                .authorizationRequestRepository(new HttpSessionOAuth2AuthorizationRequestRepository());
         // Also, logout at the OpenID Connect provider
-        http.logout(logout -> logout
+        http.logout()
                 .deleteCookies("JSESSIONID")
-                .logoutSuccessUrl("/").permitAll()
-                .logoutSuccessHandler(new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository)));
-        // Require authentication for all requests
+                .addLogoutHandler(keycloakLogoutHandler(restTemplate))
+                .logoutSuccessUrl("/");
+//                .logoutSuccessHandler(new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository));
+        // Require authentication for specific requests
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(EndpointRequest.to(
                                 InfoEndpoint.class,     //info endpoints
