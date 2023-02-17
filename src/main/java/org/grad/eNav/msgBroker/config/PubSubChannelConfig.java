@@ -17,10 +17,13 @@
 package org.grad.eNav.msgBroker.config;
 
 import org.grad.eNav.msgBroker.components.PubSubErrorHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.config.EnableIntegration;
+
+import java.util.concurrent.Executor;
 
 /**
  * The PubSubChannelConfig Class
@@ -36,6 +39,12 @@ import org.springframework.integration.config.EnableIntegration;
 public class PubSubChannelConfig {
 
     /**
+     * The Asynchronous Task Executor.
+     */
+    @Autowired
+    Executor taskExecutor;
+
+    /**
      * Defining a publish subscribe Spring Integration channel to exchange
      * the incoming AtoN data between the application components.
      *
@@ -43,7 +52,7 @@ public class PubSubChannelConfig {
      */
     @Bean
     public PublishSubscribeChannel atonPublishChannel() {
-        PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel();
+        PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel(this.taskExecutor);
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;
     }
@@ -56,7 +65,7 @@ public class PubSubChannelConfig {
      */
     @Bean
     public PublishSubscribeChannel atonDeleteChannel() {
-        PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel();
+        PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel(this.taskExecutor);
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;
     }
