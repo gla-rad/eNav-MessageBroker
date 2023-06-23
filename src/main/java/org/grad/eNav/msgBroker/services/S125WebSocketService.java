@@ -50,6 +50,11 @@ import java.util.Objects;
 public class S125WebSocketService implements MessageHandler {
 
     /**
+     * The maximum payload for the web-socket
+     */
+    final static private int MAX_PAYLOAD = 60000;
+
+    /**
      * The General Destination Prefix
      */
     @Value("${gla.rad.msg-broker.web-socket.prefix:topic}")
@@ -112,11 +117,15 @@ public class S125WebSocketService implements MessageHandler {
                 return;
             }
 
+            // Construct the payload - Watch out for large ones
+            String payload = (String) message.getPayload();
+            payload = payload.substring(0, Math.min(payload.length(), MAX_PAYLOAD));
+
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
                     (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_BBOX.getHeader()),
-                    (String) message.getPayload()
+                    payload
             );
 
             // A simple debug message;
