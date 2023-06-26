@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.config;
 
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,10 +66,11 @@ public class GSDataStoreConfig {
      */
     @Bean
     DataStore gsDataStore() {
-        // The the connection parameters
+        // The connection parameters
         Map<String, String> params = new HashMap<>();
         params.put("kafka.brokers", kafkaBrokers);
         params.put("kafka.zookeepers", kafkaZookeepers);
+        params.put("kafka.producer.config" + ProducerConfig.MAX_REQUEST_SIZE_CONFIG, "10485760");
         params.put("kafka.consumer.count", Objects.toString(noKafkaConsumers));
 
         // And construct the data store
