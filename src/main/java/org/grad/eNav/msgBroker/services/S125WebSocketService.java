@@ -119,7 +119,6 @@ public class S125WebSocketService implements MessageHandler {
 
             // Construct the payload - Watch out for large ones
             String payload = (String) message.getPayload();
-            payload = payload.substring(0, Math.min(payload.length(), MAX_PAYLOAD));
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
