@@ -11,7 +11,7 @@ To start developing just open ithe repository with the IDE of your choice. The
 original code has been generated using
 [Intellij IDEA](https://www.jetbrains.com/idea). Just open it by going to:
 
-    File -> New -> Project From Verson Control
+    File -> New -> Project From Version Control
 
 Provide the URL of the current repository and the local directory you want.
 
@@ -71,8 +71,8 @@ discuss what you would like to change.
 Please make sure to update tests as appropriate.
 
 ## License
-Distributed under the Apache License. See [LICENSE](./LICENSE) for more 
-information.
+Distributed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for  
+more information.
 
 ## Contact
 Nikolaos Vastardis - Nikolaos.Vastardis@gla-rad.org
