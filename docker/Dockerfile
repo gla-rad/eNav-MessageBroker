@@ -9,9 +9,9 @@
 # You can also push to docker-hub like:
 #     docker push glarad/enav-msg-broker:tagname
 #
-# A customized conf file (application.yaml) must be available in the folder mounted to /conf.
+# A customized conf file (application.properties) can be made available in the folder mounted to /conf.
 # When using in non-local environment it is recommended to generate new trust and keystores and place them in
-# the conf-folder and point to them in application.yaml.
+# the conf-folder and point to them in application.properties.
 #
 FROM eclipse-temurin:17-jre
 
@@ -27,4 +27,4 @@ ADD target/message-broker-0.0.3-SNAPSHOT.jar .
 
 EXPOSE 8763
 
-CMD ["java", "-Dspring.profiles.active=prod", "-jar", "message-broker-0.0.3-SNAPSHOT.jar"]
+CMD ["java", "-Dspring.profiles.active=prod", "-jar", "message-broker-0.0.3-SNAPSHOT.jar", "--spring.config.location=/conf/"]
