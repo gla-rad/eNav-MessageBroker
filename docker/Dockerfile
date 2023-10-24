@@ -13,18 +13,28 @@
 # When using in non-local environment it is recommended to generate new trust and keystores and place them in
 # the conf-folder and point to them in application.properties.
 #
-FROM eclipse-temurin:17-jre
+
+# Use the official OpenJDK 17 image as the base image
+FROM openjdk:17-jdk-slim
 
 LABEL org.opencontainers.image.source="https://github.com/gla-rad/eNav-MessageBroker"
 
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the Spring Boot JAR file into the container
+COPY target/message-broker-0.0.3-SNAPSHOT.jar .
+
+# Create a modules path just in case
 ENV LOADER_PATH /modules
-
-RUN mkdir /conf
-
 RUN mkdir $LOADER_PATH
 
-ADD target/message-broker-0.0.3-SNAPSHOT.jar .
+# Set the environment variable to activate the "prod" profile
+ENV SPRING_PROFILES_ACTIVE=prod
+
+# Define a variable for the configuration directory
+ENV CONFIG_DIR=/conf
 
 EXPOSE 8763
 
-CMD ["java", "-Dspring.profiles.active=prod", "-jar", "message-broker-0.0.3-SNAPSHOT.jar", "--spring.config.location=/conf/"]
+CMD ["java", "-jar", "message-broker-0.0.3-SNAPSHOT.jar", "--spring.config.location=optional:classpath:/,optional:file:${CONFIG_DIR}/"]
