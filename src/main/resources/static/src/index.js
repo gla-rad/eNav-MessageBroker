@@ -25,7 +25,7 @@ function setConnected(connected) {
 function connect() {
     var endpoint = $( "#endpoint option:selected" ).text();
     if(stompClient == null) {
-        var socket = new SockJS('/msg-broker-websocket');
+        var socket = new SockJS(window.location.pathname + "msg-broker-websocket");
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
             setConnected(true);
