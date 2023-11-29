@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageHeaders;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -73,8 +74,9 @@ public class PublishController {
      * @param atonUID   The S125 AtoN UID to be published
      * @param bbox      The bounding box to publish the S125 for
      * @param s125xml   The S125 XML message to be published
-     * @return The receive AtoN along with the HTTP response
+     * @return The received AtoN along with the HTTP response
      */
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(
             value = "/atons/{atonUID}",
             consumes = {"application/gml+xml;charset=UTF-8"},
@@ -109,8 +111,9 @@ public class PublishController {
      * publication deletion from the Geomesa Data Store.
      *
      * @param atonUID   The S125 AtoN UID to be deleted
-     * @return The receive AtoN along with the HTTP response
+     * @return The deleted AtoN along with the HTTP response
      */
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping(value = "/atons/{atonUID}")
     public ResponseEntity<String> deleteAton(@PathVariable("atonUID") String atonUID) {
         // Publish the AtoN deletion message
