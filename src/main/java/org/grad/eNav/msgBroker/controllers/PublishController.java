@@ -117,15 +117,21 @@ public class PublishController {
     @DeleteMapping(value = "/atons/{atonUID}")
     public ResponseEntity<String> deleteAton(@PathVariable("atonUID") String atonUID) {
         // Publish the AtoN deletion message
-        Optional.of("Deletion")
-                .map(MessageBuilder::withPayload)
-                .map(builder -> {
-                    builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType());
-                    builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
-                    return builder;
-                })
-                .map(MessageBuilder::build)
-                .map(this.atonDeleteChannel::send);
+        try {
+            Optional.of("Deletion")
+                    .map(MessageBuilder::withPayload)
+                    .map(builder -> {
+                        builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType());
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
+                        return builder;
+                    })
+                    .map(MessageBuilder::build)
+                    .map(this.atonDeleteChannel::send);
+        } catch(Exception ex) {
+            log.error(ex.getMessage());
+            return ResponseEntity.badRequest()
+                    .build();
+        }
 
         // If the publication was successful, return OK
         return ResponseEntity.ok().build();
