@@ -27,15 +27,15 @@ function connect() {
     if(stompClient == null) {
         var socket = new SockJS(window.location.pathname + 'msg-broker-websocket');
         stompClient = Stomp.over(socket);
-        stompClient.connect({}, function (frame) {
+        stompClient.connect({}, (frame) => {
             setConnected(true);
-            stompClient.subscribe('/topic/' + endpoint, function (msg) {
+            stompClient.subscribe('/topic/' + endpoint, (msg) => {
                 showMessage(endpoint, JSON.parse(msg.body));
             });
         });
     } else {
         setConnected(true);
-        stompClient.subscribe('/topic/' + endpoint, function (msg) {
+        stompClient.subscribe('/topic/' + endpoint, (msg) => {
             showMessage(endpoint, JSON.parse(msg.body));
         });
     }
@@ -96,9 +96,9 @@ function showMessage(endpoint, msg) {
  * operation and the form doesn't really do anything.
  */
 $(() => {
-    $( "#connect" ).click(function() { connect(); });
-    $( "#disconnect" ).click(function() { disconnect(); });
-    $("form").on('submit', function (e) {
+    $( "#connect" ).click(() => { connect(); });
+    $( "#disconnect" ).click(() => { disconnect(); });
+    $("form").on('submit', (e) => {
         e.preventDefault();
     });
 });
