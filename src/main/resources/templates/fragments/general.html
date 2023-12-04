@@ -20,10 +20,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="UTF-8">
         <title>e-Navigation Message Broker</title>
-        <link rel="icon" type="image/png" th:href="@{/images/favicon.ico}" />
-        <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" >
-        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
-        <link rel="stylesheet" th:href="@{/css/common.css}"/>
+        <link rel="icon" type="image/png" th:href="@{~/images/favicon.ico}" />
+        <link rel="stylesheet" th:href="@{~/webjars/bootstrap/css/bootstrap.min.css}" >
+        <link rel="stylesheet" th:href="@{~/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+        <link rel="stylesheet" th:href="@{~/css/common.css}"/>
         <style th:inline="text">
             .sky-bg {
               /*! min-height: 100%; */
@@ -60,24 +60,24 @@
                     <div class="collapse navbar-collapse" id="navbarNavDropdown">
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item" sec:authorize="isAuthenticated()">
-                                <a class="nav-link" th:href="@{/}">
+                                <a class="nav-link" th:href="@{~/}">
                                     Home
                                 </a>
                             </li>
                             <li class="nav-item" sec:authorize="isAuthenticated()">
-                                <a class="nav-link" th:href="@{about}">
+                                <a class="nav-link" th:href="@{~/about}">
                                     About
                                 </a>
                             </li>
                         </ul>
                         <ul class="nav navbar-nav navbar-right">
                             <li class="nav-item" sec:authorize="!isAuthenticated()">
-                                <a class="nav-link" href="/login" th:href="@{/sso/login}">
+                                <a class="nav-link" href="/login" th:href="@{~/sso/login}">
                                     <i class="fa-solid fa-right-to-bracket"></i>&nbsp;Sign in
                                 </a>
                             </li>
                             <li sec:authorize="isAuthenticated()">
-                                <a class="nav-link" href="/logout" th:href="@{/logout}">
+                                <a class="nav-link" href="/logout" th:href="@{~/logout}">
                                     <i class="fa-solid fa-right-from-bracket"></i>&nbsp;Logout
                                 </a>
                             </li>
