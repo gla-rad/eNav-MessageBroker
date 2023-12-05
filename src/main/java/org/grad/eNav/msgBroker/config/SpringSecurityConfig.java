@@ -212,7 +212,7 @@ class SpringSecurityConfig {
                                            RestTemplate restTemplate) throws Exception {
         // Authenticate through configured OpenID Provider
         http.oauth2Login(login -> login
-                .loginPage("/enav/oauth2/authorization/keycloak")
+                .loginPage("/oauth2/authorization/keycloak")
                 .userInfoEndpoint((userInfoCustomizer) -> userInfoCustomizer
                         .userAuthoritiesMapper(this.userAuthoritiesMapper())
                 )
