@@ -36,5 +36,5 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: docker
-        tags: ghcr.io/gla-rad/enav-messagebroker
+        tags: ghcr.io/gla-rad/enav-msg-broker
         push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
