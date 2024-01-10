@@ -1,6 +1,7 @@
 # The GLA e-Navigation Service Architecture - Message Broker Service
 
 ## Quick Reference
+
 * Maintained by:<br/>
 [GRAD](https://www.gla-rad.org/)
 * Where to get help:<br/>
@@ -10,6 +11,7 @@
 (for GRAD members only)
 
 ## What is e-Navigation
+
 The maritime domain is facing a number for challenges, mainly due to the
 increasing demand, that may increase the risk of an accident or loss of life.
 These challenges require technological solutions and e-Navigation is one such
@@ -274,6 +276,7 @@ on their attributes (e.g. geometry), to ensure that only the appropriate
 information is received.
 
 ## Contributing
+
 For contributing in this project, please have a look at the Github repository
 [eNav-MessageBroker](https://github.com/gla-rad/eNav-MessageBroker). Pull
 requests are welcome. For major changes, please open an issue first to discuss
@@ -282,8 +285,10 @@ what you would like to change.
 Please make sure to update tests as appropriate.
 
 ## License
+
 Distributed under the Apache License, Version 2.0.
 
 ## Contact
+
 Nikolaos Vastardis - 
 [Nikolaos.Vastardis@gla-rad.org](mailto:Nikolaos.Vastardis@gla-rad.org)

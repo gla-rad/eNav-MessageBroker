@@ -8,6 +8,7 @@ geographical location scope thus the
 utilised. The core micro-service is built using the Springboot framework.
 
 ## What is e-Navigation
+
 The maritime domain is facing a number for challenges, mainly due to the
 increasing demand, that may increase the risk of an accident or loss of life.
 These challenges require technological solutions and e-Navigation is one such
@@ -85,7 +86,8 @@ character string representation of the message type such as “aton” or
 “aton/virtual”. The latter topic format can be used to provide a more
 fine-grained topic categorisation.
 
-### Development Setup
+## Development Setup
+
 To start developing just open the repository with the IDE of your choice. The
 original code has been generated using
 [Intellij IDEA](https://www.jetbrains.com/idea). Just open it by going to:
@@ -97,7 +99,8 @@ Provide the URL of the current repository and the local directory you want.
 You don't have to use it if you have another preference. Just make sure you
 update the *.gitignore* file appropriately.
 
-### Build Setup
+## Build Setup
+
 The project is using the latest OpenJDK 21 to build, although earlier versions
 should also work.
 
@@ -106,9 +109,9 @@ IDE. Nothing exotic about the goals, just clean and install should do:
 
     mvn clean package
 
-## How to use this image
+## How to Run
 
-This image can be used in two ways (based on the use or not of the Spring Cloud
+This service can be used in two ways (based on the use or not of the Spring Cloud
 Config server).
 * Enabling the cloud config client and using the configurations located in an
   online repository.
@@ -117,7 +120,7 @@ Config server).
 
 ### Cloud Config Configuration
 
-In order to run the image in a **Cloud Config** configuration, you just need
+In order to run the service in a **Cloud Config** configuration, you just need
 to provide the environment variables that allow is to connect to the cloud
 config server. This is assumed to be provided the GRAD e-Navigation Service
 Architecture
@@ -147,7 +150,7 @@ The parameters will be picked up and used to populate the default
 As you can see, the service is called **msg-broker** and uses the **8763** port
 when running.
 
-To run the image, along with the aforementioned environment variables, you can
+To run the service, along with the aforementioned environment variables, you can
 use the following command:
 
     java -jar \
@@ -159,16 +162,15 @@ use the following command:
 
 ### Local Config Configuration
 
-In order to run the image in a **Local Config** configuration, you just need
-to mount a local configuration directory that contains the necessary
-**.properties** files (including bootstrap) into the **/conf** directory of the
-image.
+In order to run the service in a **Local Config** configuration, you just need
+to provide a local configuration directory that contains the necessary
+**.properties** files (including bootstrap).
 
 This can be done in the following way:
 
     java -jar \
        --spring.config.location=optional:classpath:/,optional:file:<config_dir>/ \
-        <message-broker.jar>
+       <message-broker.jar>
 
 Examples of the required properties files can be seen below.
 
@@ -259,6 +261,7 @@ server like keycloak, logging configuration, the eureka client connection etc.:
     gla.rad.msgBroker.info.copyright=\u00A9 2023 GLA Research & Development
 
 ## Operation
+
 The microservice is built as an HTTP REST overlay over a Kafka message broker,
 while the GeoMesa library is used to provide a spatial semantics layer on top
 of the published data. In other words, this means that the data (such as the
@@ -302,16 +305,19 @@ interested in propagating it. For example, for AtoNs these are:
 * A service passing AtoN messages to a web-socket for debugging purposes
 
 ## Contributing
+
 Pull requests are welcome. For major changes, please open an issue first to 
 discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
 ## License
+
 Distributed under the Apache License, Version 2.0. See [LICENSE](./LICENSE.md)
 for more information.
 
 ## Contact
+
 Nikolaos Vastardis - Nikolaos.Vastardis@gla-rad.org
 
 
