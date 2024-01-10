@@ -155,7 +155,7 @@ This can be done in the following way:
 
 Examples of the required properties files can be seen below.
 
-For bootstrapping, we need to disable the cloud config client, and clear our the
+For bootstrapping, we need to disable the cloud config client, and clear out the
 environment variable inputs:
     
     server.port=8763

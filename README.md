@@ -150,13 +150,12 @@ when running.
 To run the image, along with the aforementioned environment variables, you can
 use the following command:
 
-    docker run -t -i --rm \
-        -p 8763:8763 \
-        -e ENAV_CLOUD_CONFIG_URI='<cloud config server url>' \
-        -e ENAV_CLOUD_CONFIG_BRANCH='<cloud config config repository branch>' \
-        -e ENAV_CLOUD_CONFIG_USERNAME='<config config repository username>' \
-        -e ENAV_CLOUD_CONFIG_PASSWORD='<config config repository passord>' \
-        <image-id>
+    java -jar \
+        -DENAV_CLOUD_CONFIG_URI='<cloud config server url>' \
+        -DENAV_CLOUD_CONFIG_BRANCH='<cloud config config repository branch>' \
+        -DENAV_CLOUD_CONFIG_USERNAME='<config config repository username>' \
+        -DENAV_CLOUD_CONFIG_PASSWORD='<config config repository passord>' \
+        <message-broker.jar>
 
 ### Local Config Configuration
 
@@ -173,7 +172,7 @@ This can be done in the following way:
 
 Examples of the required properties files can be seen below.
 
-For bootstrapping, we need to disable the cloud config client, and clear our the
+For bootstrapping, we need to disable the cloud config client, and clear out the
 environment variable inputs:
 
     server.port=8763
