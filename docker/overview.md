@@ -158,7 +158,7 @@ Examples of the required properties files can be seen below.
 For bootstrapping, we need to disable the cloud config client, and clear our the
 environment variable inputs:
     
-    server.port=8760
+    server.port=8763
     spring.application.name=msg-broker
     spring.application.version=<application.version>
     
