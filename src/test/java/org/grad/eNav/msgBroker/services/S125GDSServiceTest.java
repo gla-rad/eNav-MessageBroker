@@ -80,18 +80,18 @@ class S125GDSServiceTest {
     AtonListenerProperties atonListenerProperties;
 
     /**
-     * The AtoN Publish Channel mock to listen to the AtoN messages.
+     * The S-100 Publish Channel mock to listen to the S-100 messages.
      */
     @Mock
-    @Qualifier("atonPublishChannel")
-    PublishSubscribeChannel atonPublishChannel;
+    @Qualifier("s100PublishChannel")
+    PublishSubscribeChannel s100PublishChannel;
 
     /**
-     * The AtoN Delete Channel mock to listen to the AtoN message deletions.
+     * The S-100 Delete Channel mock to listen to the S-100 message deletions.
      */
     @Mock
-    @Qualifier("atonDeleteChannel")
-    PublishSubscribeChannel atonDeleteChannel;
+    @Qualifier("s100DeleteChannel")
+    PublishSubscribeChannel s100DeleteChannel;
 
     /**
      * The Geomesa Data Store mock.
@@ -135,8 +135,8 @@ class S125GDSServiceTest {
         this.s125GDSService.init();
 
         // Verify that the service subscribed to the AtoN publish subscribe channel
-        verify(this.atonPublishChannel, times(1)).subscribe(this.s125GDSService);
-        verify(this.atonDeleteChannel, times(1)).subscribe(this.s125GDSService);
+        verify(this.s100PublishChannel, times(1)).subscribe(this.s125GDSService);
+        verify(this.s100DeleteChannel, times(1)).subscribe(this.s125GDSService);
     }
 
     /**
@@ -152,8 +152,8 @@ class S125GDSServiceTest {
         this.s125GDSService.init();
 
         // Verify that the service did NOT subscribe to the AtoN publish subscribe channel
-        verify(this.atonPublishChannel, never()).subscribe(this.s125GDSService);
-        verify(this.atonDeleteChannel, never()).subscribe(this.s125GDSService);
+        verify(this.s100PublishChannel, never()).subscribe(this.s125GDSService);
+        verify(this.s100DeleteChannel, never()).subscribe(this.s125GDSService);
     }
 
     /**
@@ -168,8 +168,8 @@ class S125GDSServiceTest {
 
         // Verify that the service shuts down gracefully
         verify(this.producer, times(1)).dispose();
-        verify(this.atonPublishChannel, times(1)).destroy();
-        verify(this.atonDeleteChannel, times(1)).destroy();
+        verify(this.s100PublishChannel, times(1)).destroy();
+        verify(this.s100DeleteChannel, times(1)).destroy();
     }
 
     /**
@@ -184,7 +184,7 @@ class S125GDSServiceTest {
         Message message = Optional.of(this.xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_BBOX.getHeader(), this.s125Node.getBbox()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -208,7 +208,7 @@ class S125GDSServiceTest {
         Message message = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_BBOX.getHeader(), this.s125Node.getBbox()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 

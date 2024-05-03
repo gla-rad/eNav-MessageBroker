@@ -32,7 +32,7 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
-    private JsonNode bbox;
+    private JsonNode geometry;
     private String content;
 
     /**
@@ -45,11 +45,11 @@ public abstract class S100AbstractNode implements IJsonSerializable {
     /**
      * The Fully Populated Constructor.
      *
-     * @param bbox          The object bounding box
+     * @param geometry          The object bounding box
      * @param content       The XML content
      */
-    public S100AbstractNode(JsonNode bbox, String content) {
-        this.bbox = bbox;
+    public S100AbstractNode(JsonNode geometry, String content) {
+        this.geometry = geometry;
         this.content = content;
     }
 
@@ -72,21 +72,21 @@ public abstract class S100AbstractNode implements IJsonSerializable {
     }
 
     /**
-     * Gets bbox.
+     * Gets geometry.
      *
-     * @return Value of bbox.
+     * @return Value of geometry.
      */
-    public JsonNode getBbox() {
-        return bbox;
+    public JsonNode getGeometry() {
+        return geometry;
     }
 
     /**
-     * Sets new bbox.
+     * Sets new geometry.
      *
-     * @param bbox New value of bbox.
+     * @param geometry New value of geometry.
      */
-    public void setBbox(JsonNode bbox) {
-        this.bbox = bbox;
+    public void setGeometry(JsonNode geometry) {
+        this.geometry = geometry;
     }
 
     /** {@inheritDoc} */
@@ -95,12 +95,12 @@ public abstract class S100AbstractNode implements IJsonSerializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         S100AbstractNode that = (S100AbstractNode) o;
-        return Objects.equals(bbox, that.bbox) && Objects.equals(content, that.content);
+        return Objects.equals(geometry, that.geometry) && Objects.equals(content, that.content);
     }
 
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        return Objects.hash(bbox, content);
+        return Objects.hash(geometry, content);
     }
 }

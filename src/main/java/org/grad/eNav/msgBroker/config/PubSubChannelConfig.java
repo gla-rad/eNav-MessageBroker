@@ -27,10 +27,10 @@ import java.util.concurrent.Executor;
 
 /**
  * The PubSubChannelConfig Class
- *
+ * <p/>
  * This class establishes a publish-subscribe channel when the internal
  * components of this application can exchange data messages. This will
- * be used to transfer the incoming radar data to various consumers.
+ * be used to transfer the incoming messages data to various consumers.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
@@ -51,7 +51,7 @@ public class PubSubChannelConfig {
      * @return The publish subscribe AtoN message channel
      */
     @Bean
-    public PublishSubscribeChannel atonPublishChannel() {
+    public PublishSubscribeChannel s100PublishChannel() {
         PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel(this.taskExecutor);
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;
@@ -64,7 +64,7 @@ public class PubSubChannelConfig {
      * @return The publish subscribe AtoN delete channel
      */
     @Bean
-    public PublishSubscribeChannel atonDeleteChannel() {
+    public PublishSubscribeChannel s100DeleteChannel() {
         PublishSubscribeChannel pubsubChannel = new PublishSubscribeChannel(this.taskExecutor);
         pubsubChannel.setErrorHandler(new PubSubErrorHandler());
         return pubsubChannel;

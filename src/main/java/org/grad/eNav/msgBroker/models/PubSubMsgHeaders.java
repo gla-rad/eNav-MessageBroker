@@ -23,8 +23,9 @@ package org.grad.eNav.msgBroker.models;
  */
 public enum PubSubMsgHeaders {
     PUBSUB_S124_ID("PUBSUB-S124-ID"),
-    PUBSUB_S125_ID("PUBSUBS-125-ID"),
-    PUBSUB_BBOX("PUBSUB-BBOX");
+    PUBSUB_S125_ID("PUBSUB-S125-ID"),
+    PUBSUB_S201_ID("PUBSUB-S201-ID"),
+    PUBSUB_GEOM("PUBSUB-GEOMETRY");
 
     // Enum Variables
     private String header;

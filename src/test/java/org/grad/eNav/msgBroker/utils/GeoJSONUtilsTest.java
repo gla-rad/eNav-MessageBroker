@@ -20,13 +20,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GeoJSONUtilsTest {
 
     /**
-     * Test that we can create the GeoJSON point definitions correctly for the
-     * any given x and y coordinates.
+     * Test that we can create the GeoJSON point definitions correctly for any
+     * given x and y coordinates.
      */
     @Test
     public void testCreateGeoJSONPoint() {
@@ -56,6 +58,31 @@ public class GeoJSONUtilsTest {
     }
 
     /**
+     * Test that we can create the GeoJSON polygon definitions correctly for
+     * any given list of x and y coordinates.
+     */
+    @Test
+    public void testCreateGeoJSONPolygon() {
+        JsonNode polygon00000 = GeoJSONUtils.createGeoJSONPolygon(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        assertNotNull(polygon00000);
+        assertEquals("Polygon", polygon00000.get("type").textValue());
+        assertEquals("[[[0.0,0.0],[0.0,0.0],[0.0,0.0]]]", polygon00000.get("coordinates").toString());
+        assertEquals("EPSG:4326", polygon00000.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point12Square = GeoJSONUtils.createGeoJSONPolygon(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList());
+        assertNotNull(point12Square);
+        assertEquals("Polygon", point12Square.get("type").textValue());
+        assertEquals("[[[1,2],[1,-2],[-1,-2],[-1,2],[1,2]]]", point12Square.get("coordinates").toString());
+        assertEquals("EPSG:4326", point12Square.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point12SquareCSR = GeoJSONUtils.createGeoJSONPolygon(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList(), 2810);
+        assertNotNull(point12SquareCSR);
+        assertEquals("Polygon", point12SquareCSR.get("type").textValue());
+        assertEquals("[[[1,2],[1,-2],[-1,-2],[-1,2],[1,2]]]", point12SquareCSR.get("coordinates").toString());
+        assertEquals("EPSG:2810", point12SquareCSR.get("crs").get("properties").get("name").textValue());
+    }
+
+    /**
      * Test that we can translate the GeoJSON points correctly to their ECQL
      * descriptions.
      */
@@ -78,6 +105,27 @@ public class GeoJSONUtilsTest {
         JsonNode point18090 = GeoJSONUtils.createGeoJSONPoint(180, 90);
         String point18090ECQL = GeoJSONUtils.geoJSONPointToECQL(point18090);
         assertEquals("POINT (180 90)", point18090ECQL);
+    }
+
+    /**
+     * Test that we can translate the GeoJSON polygons correctly to their ECQL
+     * descriptions.
+     */
+    @Test
+    public void testGeoJSONPolygonToECQL() {
+        String polygonNull = GeoJSONUtils.geoJSONPolygonToECQL(null);
+        assertEquals("", polygonNull);
+
+        String polygonEmpty = GeoJSONUtils.geoJSONPolygonToECQL(new ObjectMapper().createObjectNode());
+        assertEquals("", polygonEmpty);
+
+        JsonNode polygon000000 = GeoJSONUtils.createGeoJSONPolygon(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        String polygon000000ECQL = GeoJSONUtils.geoJSONPolygonToECQL(polygon000000);
+        assertEquals("POLYGON ((0.0 0.0, 0.0 0.0, 0.0 0.0))", polygon000000ECQL);
+
+        JsonNode polygonRandom = GeoJSONUtils.createGeoJSONPolygon(Arrays.stream(new Double[]{-26.630859, 53.956086, -26.630859, 58.995311, -8.876953, 58.995311, -8.876953, 53.956086, -26.630859, 53.956086}).toList());
+        String polygonRandomECQL = GeoJSONUtils.geoJSONPolygonToECQL(polygonRandom);
+        assertEquals("POLYGON ((-26.630859 53.956086, -26.630859 58.995311, -8.876953 58.995311, -8.876953 53.956086, -26.630859 53.956086))", polygonRandomECQL);
     }
 
 }

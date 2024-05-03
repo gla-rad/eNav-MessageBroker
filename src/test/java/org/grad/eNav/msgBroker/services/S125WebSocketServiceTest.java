@@ -18,9 +18,7 @@ package org.grad.eNav.msgBroker.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.io.IOUtils;
-import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
-import org.grad.eNav.msgBroker.models.PublicationType;
-import org.grad.eNav.msgBroker.models.S125Node;
+import org.grad.eNav.msgBroker.models.*;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +37,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
@@ -59,10 +56,10 @@ class S125WebSocketServiceTest {
     S125WebSocketService s125WebSocketService;
 
     /**
-     * The AtoN Publish Subscribe Channel mock.
+     * The S-100 Publish Subscribe Channel mock.
      */
     @Mock
-    PublishSubscribeChannel atonPublishChannel;
+    PublishSubscribeChannel s100PublishChannel;
 
     /**
      * The Web Socket mock.
@@ -71,24 +68,36 @@ class S125WebSocketServiceTest {
     SimpMessagingTemplate webSocket;
 
     // Test Variables
-    private String xml;
+    private String s124Xml;
+    private String s125Xml;
+    private String s201Xml;
+    private S124Node s124Node;
     private S125Node s125Node;
+    private S201Node s201Node;
 
     /**
      * Common setup for all the tests.
      */
     @BeforeEach
     void setup() throws IOException {
-        // First read a valid S125 content to generate the publish-subscribe
-        // message for.
-        InputStream in = new ClassPathResource("s125-msg.xml").getInputStream();
-        this.xml = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        // Read a valid S-124 content to generate the pub-sub message for.
+        InputStream s124In = new ClassPathResource("s124-msg.xml").getInputStream();
+        this.s124Xml = IOUtils.toString(s124In, StandardCharsets.UTF_8);
+        // Read a valid S-125 content to generate the pub-sub message for.
+        InputStream s125In = new ClassPathResource("s125-msg.xml").getInputStream();
+        this.s125Xml = IOUtils.toString(s125In, StandardCharsets.UTF_8);
+        // Read a valid S-201 content to generate the pub-sub message for.
+        InputStream s201In = new ClassPathResource("s201-msg.xml").getInputStream();
+        this.s201Xml = IOUtils.toString(s201In, StandardCharsets.UTF_8);
 
         // Also create a GeoJSON point geometry for our S125 message
         JsonNode point = GeoJSONUtils.createGeoJSONPoint(53.61, 1.594);
 
         // Now create the S125 node object
-        this.s125Node = new S125Node("test_aton", point, this.xml);
+        this.s124Node = new S124Node("NW-001-01", point, this.s124Xml);
+        this.s125Node = new S125Node("test_aton", point, this.s125Xml);
+        this.s201Node = new S201Node("test_admin_aton", point, this.s201Xml);
+
 
         // Also set the web-socket service topic prefix
         this.s125WebSocketService.prefix = "topic";
@@ -103,7 +112,7 @@ class S125WebSocketServiceTest {
         // Perform the service call
         this.s125WebSocketService.init();
 
-        verify(this.atonPublishChannel, times(1)).subscribe(this.s125WebSocketService);
+        verify(this.s100PublishChannel, times(1)).subscribe(this.s125WebSocketService);
     }
 
     /**
@@ -115,20 +124,48 @@ class S125WebSocketServiceTest {
         // Perform the service call
         this.s125WebSocketService.destroy();
 
-        verify(this.atonPublishChannel, times(1)).destroy();
+        verify(this.s100PublishChannel, times(1)).destroy();
     }
 
     /**
      * Test that the Web-Socket controlling service can process correctly the
-     * AtoN messages published in the AtoN publish-subscribe channel.
+     * Navigation Warning messages published in the S-100 publish-subscribe
+     * channel.
      */
     @Test
-    void testHandleMessage() {
+    void testHandleNavigationWarningMessage() {
         // Create a message to be handled
-        Message message = Optional.of(this.xml).map(MessageBuilder::withPayload)
+        Message<?> message = Optional.of(this.s124Xml).map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.NAVIGATION_WARNING.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader(), this.s124Node.getMessageId()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometry()))
+                .map(MessageBuilder::build)
+                .orElse(null);
+
+        // Perform the service call
+        this.s125WebSocketService.handleMessage(message);
+
+        // Verify that we send a packet to the VDES port and get that packet
+        ArgumentCaptor<String> topicArgument = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<S124Node> payLoadArgument = ArgumentCaptor.forClass(S124Node.class);
+        verify(this.webSocket, times(1)).convertAndSend(topicArgument.capture(), payLoadArgument.capture());
+
+        // Verify the packet
+        assertEquals("/topic/" + PublicationType.NAVIGATION_WARNING.getType(), topicArgument.getValue());
+        assertEquals(this.s124Node, payLoadArgument.getValue());
+    }
+
+    /**
+     * Test that the Web-Socket controlling service can process correctly the
+     * AtoN messages published in the S-100 publish-subscribe channel.
+     */
+    @Test
+    void testHandleAtoNMessage() {
+        // Create a message to be handled
+        Message<?> message = Optional.of(this.s125Xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_BBOX.getHeader(), this.s125Node.getBbox()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -146,20 +183,66 @@ class S125WebSocketServiceTest {
     }
 
     /**
-     * Test that we can only send S125 messages down to the web-socket.
+     * Test that the Web-Socket controlling service can process correctly the
+     * Admin AtoN messages published in the S-100 publish-subscribe channel.
      */
     @Test
-    void testHandleMessageWrongPayload() {
-        // Change the message content type to something else
-        Message message = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
-                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_BBOX.getHeader(), this.s125Node.getBbox()))
+    void testHandleAdminAtoNMessage() {
+        // Create a message to be handled
+        Message<?> message = Optional.of(this.s201Xml).map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
         // Perform the service call
         this.s125WebSocketService.handleMessage(message);
+
+        // Verify that we send a packet to the VDES port and get that packet
+        ArgumentCaptor<String> topicArgument = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<S201Node> payLoadArgument = ArgumentCaptor.forClass(S201Node.class);
+        verify(this.webSocket, times(1)).convertAndSend(topicArgument.capture(), payLoadArgument.capture());
+
+        // Verify the packet
+        assertEquals("/topic/" + PublicationType.ADMIN_ATON.getType(), topicArgument.getValue());
+        assertEquals(this.s201Node, payLoadArgument.getValue());
+    }
+
+    /**
+     * Test that we can only send appropriate messages down to the web-socket.
+     */
+    @Test
+    void testHandleMessageWrongPayload() {
+        // Change the message content type to something else
+        Message<?> message1 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.NAVIGATION_WARNING.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader(), this.s124Node.getMessageId()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometry()))
+                .map(MessageBuilder::build)
+                .orElse(null);
+
+        // Another message for S-125
+        Message<?> message2 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
+                .map(MessageBuilder::build)
+                .orElse(null);
+
+
+        // Another message for S-201
+        Message<?> message3 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometry()))
+                .map(MessageBuilder::build)
+                .orElse(null);
+
+        // Perform the service calls
+        this.s125WebSocketService.handleMessage(message1);
+        this.s125WebSocketService.handleMessage(message2);
+        this.s125WebSocketService.handleMessage(message3);
 
         // Verify that we didn't send any packets to the VDES port
         verify(this.webSocket, never()).convertAndSend(any(String.class), any(Object.class));

@@ -33,8 +33,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * The GeomesaS125 Class.
+ * <p/>
  * The implementation of the S-125 data entries transported through the Geomesa
- * data stores.
+ * data-stores.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
@@ -79,7 +81,6 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     public Geometry getGeometry() {
         return geometry;
     }
-
 
     /**
      * Defines the Geomesa Data Type - AtoN.
@@ -141,7 +142,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
 
             for(S125Node node: s125Nodes) {
                 builder.set("atonUID", node.getAtonUID());
-                builder.set("geom", GeoJSONUtils.geoJSONPointToECQL(node.getBbox()));
+                builder.set("geom", GeoJSONUtils.geoJSONPointToECQL(node.getGeometry()));
                 builder.set("content", node.getContent());
 
                 // be sure to tell GeoTools explicitly that we want to use the ID we provided

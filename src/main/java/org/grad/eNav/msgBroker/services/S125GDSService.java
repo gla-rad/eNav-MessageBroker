@@ -95,18 +95,18 @@ public class S125GDSService implements MessageHandler  {
     AtonListenerProperties atonListenerProperties;
 
     /**
-     * The AtoN Publish Channel to listen to the AtoN messages.
+     * The S-100 Publish Channel to listen to the S-100 messages.
      */
     @Autowired
-    @Qualifier("atonPublishChannel")
-    PublishSubscribeChannel atonPublishChannel;
+    @Qualifier("s100PublishChannel")
+    PublishSubscribeChannel s100PublishChannel;
 
     /**
-     * The AtoN Delete Channel to listen to the AtoN message deletions.
+     * The S-100 Delete Channel to listen to the S-100 message deletions.
      */
     @Autowired
-    @Qualifier("atonDeleteChannel")
-    PublishSubscribeChannel atonDeleteChannel;
+    @Qualifier("s100DeleteChannel")
+    PublishSubscribeChannel s100DeleteChannel;
 
     /**
      * The Geomesa Data Store.
@@ -143,8 +143,8 @@ public class S125GDSService implements MessageHandler  {
         }
 
         // Register a new listeners to the data channels
-        this.atonPublishChannel.subscribe(this);
-        this.atonDeleteChannel.subscribe(this);
+        this.s100PublishChannel.subscribe(this);
+        this.s100DeleteChannel.subscribe(this);
     }
 
     /**
@@ -155,11 +155,11 @@ public class S125GDSService implements MessageHandler  {
     public void destroy() {
         log.info("Geomesa Data Store Service is shutting down...");
         this.producer.dispose();
-        if(this.atonPublishChannel != null) {
-            this.atonPublishChannel.destroy();
+        if(this.s100PublishChannel != null) {
+            this.s100PublishChannel.destroy();
         }
-        if(this.atonDeleteChannel != null) {
-            this.atonDeleteChannel.destroy();
+        if(this.s100DeleteChannel != null) {
+            this.s100DeleteChannel.destroy();
         }
     }
 
@@ -187,7 +187,7 @@ public class S125GDSService implements MessageHandler  {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
-                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_BBOX.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
                     (String) message.getPayload()
             );
 

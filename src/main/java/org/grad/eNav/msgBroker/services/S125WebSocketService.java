@@ -18,9 +18,7 @@ package org.grad.eNav.msgBroker.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
-import org.grad.eNav.msgBroker.models.PublicationType;
-import org.grad.eNav.msgBroker.models.S125Node;
+import org.grad.eNav.msgBroker.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,11 +59,11 @@ public class S125WebSocketService implements MessageHandler {
     String prefix;
 
     /**
-     * The AtoN Publish Channel to listen the AtoN messages to.
+     * The S-100 Publish Channel to listen the AtoN messages to.
      */
     @Autowired
-    @Qualifier("atonPublishChannel")
-    PublishSubscribeChannel atonPublishChannel;
+    @Qualifier("s100PublishChannel")
+    PublishSubscribeChannel s100PublishChannel;
 
     /**
      * Attach the web-socket as a simple messaging template
@@ -81,7 +79,7 @@ public class S125WebSocketService implements MessageHandler {
     @PostConstruct
     public void init() {
         log.info("AtoN Message Web Socket Service is booting up...");
-        this.atonPublishChannel.subscribe(this);
+        this.s100PublishChannel.subscribe(this);
     }
 
     /**
@@ -91,14 +89,14 @@ public class S125WebSocketService implements MessageHandler {
     @PreDestroy
     public void destroy() {
         log.info("AtoN Message Web Socket Service is shutting down...");
-        if(this.atonPublishChannel != null) {
-            this.atonPublishChannel.destroy();
+        if(this.s100PublishChannel != null) {
+            this.s100PublishChannel.destroy();
         }
     }
 
     /**
      * This is a simple handler for the incoming messages. This is a generic
-     * handler for any type of Spring Integration messages but it should really
+     * handler for any type of Spring Integration messages, but it should really
      * only be used for the ones containing RadarMessage payloads.
      *
      * @param message               The message to be handled
@@ -110,39 +108,76 @@ public class S125WebSocketService implements MessageHandler {
         String endpoint = Objects.toString(message.getHeaders().get(MessageHeaders.CONTENT_TYPE));
 
         // Check that the message type is correct
-        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+        if(endpoint.compareTo(PublicationType.NAVIGATION_WARNING.getType()) == 0) {
             // Check that this seems ot be a valid message
-            if(!(message.getPayload() instanceof String)) {
-                log.warn("Web-Socket message handler received a message with erroneous format.");
+            if(!(message.getPayload() instanceof String payload)) {
+                log.warn("Web-Socket message handler received a Navigation Warning message with erroneous format.");
                 return;
             }
 
-            // Construct the payload - Watch out for large ones
-            String payload = (String) message.getPayload();
+            // Get the Aton Node payload
+            S124Node s124Node = new S124Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    payload
+            );
+
+            // A simple debug message;
+            log.debug(String.format("Received Navigation Warning with UID: %s.", s124Node.getMessageId()));
+
+            // Now push the Navigation Warning node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s124Node);
+        }
+        else if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof String payload)) {
+                log.warn("Web-Socket message handler received an AtoN message with erroneous format.");
+                return;
+            }
 
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
-                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_BBOX.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
                     payload
             );
 
             // A simple debug message;
             log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getAtonUID()));
 
-            // Now push the aton node down the web-socket stream
-            this.pushAton(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
+            // Now push the AtoN node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
+        }
+        else if(endpoint.compareTo(PublicationType.ADMIN_ATON.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof String payload)) {
+                log.warn("Web-Socket message handler received an Admin AtoN message with erroneous format.");
+                return;
+            }
+
+            // Get the Admin Aton Node payload
+            S201Node s201Node = new S201Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    payload
+            );
+
+            // A simple debug message;
+            log.debug(String.format("Received Admin AtoN Message with UID: %s.", s201Node.getAtonUID()));
+
+            // Now push the Admin AtoN node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s201Node);
         }
     }
 
     /**
-     * Pushes a new/updated AtoN node into the Web-Socket messaging template.
+     * Pushes a new/updated node into the Web-Socket messaging template.
      *
      * @param messagingTemplate     The web-socket messaging template
      * @param topic                 The topic of the web-socket
-     * @param payload               The payload to be pushed
+     * @param payload               The node payload to be pushed
      */
-    private void pushAton(SimpMessagingTemplate messagingTemplate, String topic, Object payload) {
+    private void pushNode(SimpMessagingTemplate messagingTemplate, String topic, Object payload) {
         messagingTemplate.convertAndSend(topic, payload);
     }
 
