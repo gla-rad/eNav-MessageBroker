@@ -69,8 +69,26 @@ function showMessage(endpoint, msg) {
         $("#incoming").html("");
         noOfMessages = 0;
     }
+    // Handle Navigation Warnings
+    if(endpoint === "navigation-warning") {
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.messageId
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td id=\"" + msg.messageId + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+        // Add the content XML as text
+        $("#" + msg.messageId + noOfMessages + "Content").text(msg.content);
+    }
     // Handle Atons
-    if(endpoint === "aton") {
+    else if(endpoint === "aton") {
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td id=\"" + msg.atonUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+        // Add the content XML as text
+        $("#" + msg.atonUID + noOfMessages + "Content").text(msg.content);
+    }
+    // Handle Admin Atons
+    else if(endpoint === "admin-aton") {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
@@ -83,7 +101,6 @@ function showMessage(endpoint, msg) {
         // And add the entry to the table
         $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + "unknown"
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-4\">" + "N/A" + "</td>"
             + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
     }
 
