@@ -16,7 +16,7 @@
 
 package org.grad.eNav.msgBroker;
 
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 

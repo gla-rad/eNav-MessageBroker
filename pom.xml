@@ -23,7 +23,7 @@
 		<bootstrap.version>5.3.2</bootstrap.version>
 		<jquery.version>3.7.1</jquery.version>
 		<fa.version>6.5.1</fa.version>
-		<geomesa.version>4.0.4</geomesa.version>
+		<geomesa.version>5.0.0</geomesa.version>
 		<scala.abi.version>2.13</scala.abi.version>
 		<zookeeper.version>3.9.1</zookeeper.version>
 		<kafka.version>3.6.1</kafka.version>
@@ -127,16 +127,6 @@
 			<groupId>org.locationtech.geomesa</groupId>
 			<artifactId>geomesa-kafka-datastore_${scala.abi.version}</artifactId>
 			<version>${geomesa.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.curator</groupId>
-			<artifactId>curator-framework</artifactId>
-			<version>4.3.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.curator</groupId>
-			<artifactId>curator-recipes</artifactId>
-			<version>4.3.0</version>
 		</dependency>
 
 		<!-- Kafka Message Service Libraries -->

@@ -58,6 +58,32 @@ public class GeoJSONUtilsTest {
     }
 
     /**
+     * Test that we can create the GeoJSON points definitions correctly for
+     * any given list of x and y coordinates (as the centroid of the defined
+     * polygon).
+     */
+    @Test
+    public void testCreateGeoJSONPointCoordList() {
+        JsonNode point00_1 = GeoJSONUtils.createGeoJSONPoint(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        assertNotNull(point00_1);
+        assertEquals("Point", point00_1.get("type").textValue());
+        assertEquals("[0.0,0.0]", point00_1.get("coordinates").toString());
+        assertEquals("EPSG:4326", point00_1.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point00_2 = GeoJSONUtils.createGeoJSONPoint(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList());
+        assertNotNull(point00_2);
+        assertEquals("Point", point00_2.get("type").textValue());
+        assertEquals("[-0.0,-0.0]", point00_2.get("coordinates").toString());
+        assertEquals("EPSG:4326", point00_2.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point00_3 = GeoJSONUtils.createGeoJSONPoint(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList(), 2810);
+        assertNotNull(point00_3);
+        assertEquals("Point", point00_3.get("type").textValue());
+        assertEquals("[-0.0,-0.0]", point00_3.get("coordinates").toString());
+        assertEquals("EPSG:2810", point00_3.get("crs").get("properties").get("name").textValue());
+    }
+
+    /**
      * Test that we can create the GeoJSON polygon definitions correctly for
      * any given list of x and y coordinates.
      */

@@ -52,6 +52,17 @@ public class GeoJSONUtils {
     }
 
     /**
+     * A helper function that will return a GeoJSON Point object based on the
+     * geometry centroid for the provided list of x and y coordinates.
+     *
+     * @param xy the list of xy coordinates to create the polygon from
+     * @return the GeoJSON point object
+     */
+    public static JsonNode createGeoJSONPoint(List<Double> xy) {
+        return createGeoJSONPoint(xy, null);
+    }
+
+    /**
      * A helper function that will return a GeoJSON Polygon object based on the
      * provided list of x and y coordinates.
      *
@@ -76,6 +87,42 @@ public class GeoJSONUtils {
         // First create a com.locationtech.jts Point geometry;
         GeometryFactory factory = new GeometryFactory(new PrecisionModel(), Optional.ofNullable(srid).orElse(4326));
         Point point = factory.createPoint(new Coordinate(x, y));
+
+        // Now convert into a JSON node
+        ObjectMapper om = new ObjectMapper();
+        try {
+            return om.readTree(new GeoJsonWriter().write(point));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * A helper function that will return a GeoJSON Point object based on the
+     * provided list of x and y coordinates. The list of coordinates is expected
+     * to form a geometry, for which the centroid point will be used to define
+     * the final point. This extended version also allows users to define the
+     * coordinate reference system through the SRID parameter.
+     *
+     * @param xy a list of xy coordinates to create the polygon from
+     * @param srid the default coordinate reference system ID - defaults to EPSG:4326
+     * @return the GeoJSON point object
+     */
+    public static JsonNode createGeoJSONPoint(List<Double> xy, Integer srid) {
+        // Collect the coordinates to an array
+        Coordinate[] coordinates = IntStream.range(0, xy.size()/2)
+                .mapToObj(i -> new Coordinate(xy.get(i*2), xy.get(i*2+1)))
+                .toList()
+                .toArray(new Coordinate[]{});
+
+        // First create Point geometry for any input type
+        GeometryFactory factory = new GeometryFactory(new PrecisionModel(), Optional.ofNullable(srid).orElse(4326));
+        Point point = switch (coordinates.length) {
+            case 0 -> factory.createPoint();
+            case 1 -> factory.createPoint(coordinates[0]);
+            case 2, 3 -> factory.createLineString(coordinates).getCentroid();
+            default -> factory.createPolygon(coordinates).getCentroid();
+        };
 
         // Now convert into a JSON node
         ObjectMapper om = new ObjectMapper();
