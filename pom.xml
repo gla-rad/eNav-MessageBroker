@@ -25,8 +25,8 @@
 		<fa.version>6.5.1</fa.version>
 		<geomesa.version>5.0.0</geomesa.version>
 		<scala.abi.version>2.13</scala.abi.version>
-		<zookeeper.version>3.9.1</zookeeper.version>
-		<kafka.version>3.6.1</kafka.version>
+		<zookeeper.version>3.9.2</zookeeper.version>
+		<kafka.version>3.7.0</kafka.version>
 	</properties>
 
 	<build>
