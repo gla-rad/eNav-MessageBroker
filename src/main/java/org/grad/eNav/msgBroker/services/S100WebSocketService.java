@@ -19,6 +19,8 @@ package org.grad.eNav.msgBroker.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.models.*;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -118,7 +120,7 @@ public class S100WebSocketService implements MessageHandler {
             // Get the Aton Node payload
             S124Node s124Node = new S124Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader()),
-                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    GeometryJSONConverter.convertFromGeometry((Geometry) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader())),
                     payload
             );
 
@@ -138,7 +140,7 @@ public class S100WebSocketService implements MessageHandler {
             // Get the Aton Node payload
             S125Node s125Node = new S125Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
-                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    GeometryJSONConverter.convertFromGeometry((Geometry) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader())),
                     payload
             );
 
@@ -158,7 +160,7 @@ public class S100WebSocketService implements MessageHandler {
             // Get the Admin Aton Node payload
             S201Node s201Node = new S201Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()),
-                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    GeometryJSONConverter.convertFromGeometry((Geometry) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader())),
                     payload
             );
 

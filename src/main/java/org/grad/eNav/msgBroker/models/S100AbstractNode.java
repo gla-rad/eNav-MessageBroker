@@ -17,6 +17,9 @@
 package org.grad.eNav.msgBroker.models;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Objects;
 
@@ -32,7 +35,7 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
-    private JsonNode geometry;
+    private Geometry geometry;
     private String content;
 
     /**
@@ -49,7 +52,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      * @param content       The XML content
      */
     public S100AbstractNode(JsonNode geometry, String content) {
-        this.geometry = geometry;
+        this.geometry = GeometryJSONConverter.convertToGeometry(geometry);
         this.content = content;
     }
 
@@ -76,7 +79,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @return Value of geometry.
      */
-    public JsonNode getGeometry() {
+    public Geometry getGeometry() {
         return geometry;
     }
 
@@ -85,7 +88,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @param geometry New value of geometry.
      */
-    public void setGeometry(JsonNode geometry) {
+    public void setGeometry(Geometry geometry) {
         this.geometry = geometry;
     }
 

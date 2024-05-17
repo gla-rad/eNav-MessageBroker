@@ -24,10 +24,9 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.factory.Hints;
-import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,7 +107,7 @@ public class GeomesaS201 implements GeomesaData<S201Node>{
             StringBuilder attributes = new StringBuilder();
 
             attributes.append("atonUID:String,");
-            attributes.append("*geom:Geometry:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
+            attributes.append("*geom:Polygon:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
             attributes.append("content:String");
 
             // create the simple-feature type - use the GeoMesa 'SimpleFeatureTypes' class for best compatibility
@@ -177,7 +176,7 @@ public class GeomesaS201 implements GeomesaData<S201Node>{
                         // Create the S201Node message
                         new S201Node(
                                 ((String)feature.getAttribute("atonUID")),
-                                GeoJSONUtils.createGeoJSONPoint(((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()),
+                                GeometryJSONConverter.convertFromGeometry((Geometry) feature.getAttribute("geom")),
                                 ((String)feature.getAttribute("content"))
                         )
                 )

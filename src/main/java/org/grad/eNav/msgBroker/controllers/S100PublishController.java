@@ -154,7 +154,7 @@ public class S100PublishController {
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSONPoint(geometry));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSONPolygon(geometry));
                         return builder;
                     })
                     .map(MessageBuilder::build)
@@ -224,7 +224,7 @@ public class S100PublishController {
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType());
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), atonUID);
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSONPoint(geometry));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSONPolygon(geometry));
                         return builder;
                     })
                     .map(MessageBuilder::build)

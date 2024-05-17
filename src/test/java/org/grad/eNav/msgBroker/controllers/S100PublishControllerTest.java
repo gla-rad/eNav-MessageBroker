@@ -140,7 +140,7 @@ class S100PublishControllerTest {
         // Perform the MVC request
         MvcResult mvcResult = this.mockMvc.perform(post("/publish/s125/{atonUID}", "aton.uk.test_aton")
                 .contentType("application/gml+xml;charset=UTF-8")
-                .param("geometry", "53.61, 1.594")
+                .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
                 .content(this.s125Xml))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -159,7 +159,7 @@ class S100PublishControllerTest {
         // Perform the MVC request
         this.mockMvc.perform(post("/publish/s125/{atonUID}", "aton.uk.test_aton")
                 .contentType("application/gml+xml;charset=UTF-8")
-                .param("geometry", "53.61, 1.594"))
+                .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -184,7 +184,7 @@ class S100PublishControllerTest {
         // Perform the MVC request
         MvcResult mvcResult = this.mockMvc.perform(post("/publish/s201/{atonUID}", "aton.uk.test_aton")
                         .contentType("application/gml+xml;charset=UTF-8")
-                        .param("geometry", "53.61, 1.594")
+                        .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
                         .content(this.s201Xml))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -203,7 +203,7 @@ class S100PublishControllerTest {
         // Perform the MVC request
         this.mockMvc.perform(post("/publish/s201/{atonUID}", "aton.uk.test_aton")
                         .contentType("application/gml+xml;charset=UTF-8")
-                        .param("geometry", "53.61, 1.594"))
+                        .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594"))
                 .andExpect(status().isBadRequest());
     }
 

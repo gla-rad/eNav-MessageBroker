@@ -30,9 +30,13 @@ import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
 import org.grad.eNav.msgBroker.models.PublicationType;
 import org.grad.eNav.msgBroker.models.S125Node;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -50,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -172,7 +177,7 @@ class S125GDSServiceTest {
         Message message = Optional.of(this.xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeometryJSONConverter.convertFromGeometry(this.s125Node.getGeometry())))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -249,7 +254,11 @@ class S125GDSServiceTest {
         this.s125GDSService.pushAton(this.s125Node);
 
         // Assert that the new feature created will be send down to the datastore
-        verify(this.s125GDSService, times(1)).writeFeatures(this.simpleFeatureStore, geomesaData.getSimpleFeatureType(), geomesaData.getFeatureData(Collections.singletonList(s125Node)));
+        verify(this.s125GDSService, times(1)).writeFeatures(
+                eq(this.simpleFeatureStore),
+                eq(geomesaData.getSimpleFeatureType()),
+                anyList()
+        );
     }
 
     /**

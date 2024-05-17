@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.models;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.geotools.api.data.Query;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
@@ -25,9 +26,11 @@ import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.factory.Hints;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,7 +111,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
             StringBuilder attributes = new StringBuilder();
 
             attributes.append("atonUID:String,");
-            attributes.append("*geom:Geometry:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
+            attributes.append("*geom:Polygon:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
             attributes.append("content:String");
 
             // create the simple-feature type - use the GeoMesa 'SimpleFeatureTypes' class for best compatibility
@@ -177,7 +180,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
                         // Create the S125Node message
                         new S125Node(
                                 ((String)feature.getAttribute("atonUID")),
-                                GeoJSONUtils.createGeoJSONPoint(((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()),
+                                GeometryJSONConverter.convertFromGeometry((Geometry) feature.getAttribute("geom")),
                                 ((String)feature.getAttribute("content"))
                         )
                 )
