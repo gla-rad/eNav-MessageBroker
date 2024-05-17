@@ -37,11 +37,11 @@ public class S124Node extends S100AbstractNode {
      * The Fully Populated  Constructor.
      *
      * @param messageId     The Message ID
-     * @param bbox          The object bounding box
+     * @param geometry      The object geometry
      * @param content       The XML content
      */
-    public S124Node(String messageId, JsonNode bbox, String content) {
-        super(bbox, content);
+    public S124Node(String messageId, JsonNode geometry, String content) {
+        super(geometry, content);
         this.messageId = messageId;
     }
 

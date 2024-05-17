@@ -35,9 +35,9 @@ import jakarta.annotation.PreDestroy;
 import java.util.Objects;
 
 /**
- * The S125 Web-Socket Service Class
- *
- * This class implements a handler for the AtoN messages coming into a Spring
+ * The S100 Web-Socket Service Class
+ * <p/>
+ * This class implements a handler for the S100 messages coming into a Spring
  * Integration channel. It basically just publishes them to another channel,
  * which happens to be a web-socket implementation.
  *
@@ -45,7 +45,7 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-public class S125WebSocketService implements MessageHandler {
+public class S100WebSocketService implements MessageHandler {
 
     /**
      * The maximum payload for the web-socket

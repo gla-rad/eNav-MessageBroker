@@ -65,36 +65,6 @@ import java.util.Objects;
 public class S125GDSService implements MessageHandler  {
 
     /**
-     * The Kafka Brokers addresses.
-     */
-    @Value("${kafka.brokers:localhost:9092}" )
-    String kafkaBrokers;
-
-    /**
-     * The Kafka Zookeepers addresses.
-     */
-    @Value("${kafka.zookeepers:localhost:2181}" )
-    String kafkaZookeepers;
-
-    /**
-     * The Number of Kafka Consumers.
-     */
-    @Value("${kafka.consumer.count:1}" )
-    Integer noKafkaConsumers;
-
-    /**
-     * The Application Context.
-     */
-    @Autowired
-    ApplicationContext applicationContext;
-
-    /**
-     * The AtoN Listener Properties.
-     */
-    @Autowired
-    AtonListenerProperties atonListenerProperties;
-
-    /**
      * The S-100 Publish Channel to listen to the S-100 messages.
      */
     @Autowired

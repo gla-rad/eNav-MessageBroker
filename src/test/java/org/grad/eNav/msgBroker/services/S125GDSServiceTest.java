@@ -68,18 +68,6 @@ class S125GDSServiceTest {
     S125GDSService s125GDSService;
 
     /**
-     * The Application Context mock.
-     */
-    @Mock
-    ApplicationContext applicationContext;
-
-    /**
-     * The AtoN Listener Properties mock.
-     */
-    @Mock
-    AtonListenerProperties atonListenerProperties;
-
-    /**
      * The S-100 Publish Channel mock to listen to the S-100 messages.
      */
     @Mock

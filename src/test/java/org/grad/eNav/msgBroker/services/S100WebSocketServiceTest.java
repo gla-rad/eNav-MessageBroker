@@ -46,14 +46,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class S125WebSocketServiceTest {
+class S100WebSocketServiceTest {
 
     /**
      * The Tested Service.
      */
     @InjectMocks
     @Spy
-    S125WebSocketService s125WebSocketService;
+    S100WebSocketService s100WebSocketService;
 
     /**
      * The S-100 Publish Subscribe Channel mock.
@@ -100,7 +100,7 @@ class S125WebSocketServiceTest {
 
 
         // Also set the web-socket service topic prefix
-        this.s125WebSocketService.prefix = "topic";
+        this.s100WebSocketService.prefix = "topic";
     }
 
     /**
@@ -110,9 +110,9 @@ class S125WebSocketServiceTest {
     @Test
     void testInit() {
         // Perform the service call
-        this.s125WebSocketService.init();
+        this.s100WebSocketService.init();
 
-        verify(this.s100PublishChannel, times(1)).subscribe(this.s125WebSocketService);
+        verify(this.s100PublishChannel, times(1)).subscribe(this.s100WebSocketService);
     }
 
     /**
@@ -122,7 +122,7 @@ class S125WebSocketServiceTest {
     @Test
     void testDestroy() {
         // Perform the service call
-        this.s125WebSocketService.destroy();
+        this.s100WebSocketService.destroy();
 
         verify(this.s100PublishChannel, times(1)).destroy();
     }
@@ -143,7 +143,7 @@ class S125WebSocketServiceTest {
                 .orElse(null);
 
         // Perform the service call
-        this.s125WebSocketService.handleMessage(message);
+        this.s100WebSocketService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
         ArgumentCaptor<String> topicArgument = ArgumentCaptor.forClass(String.class);
@@ -170,7 +170,7 @@ class S125WebSocketServiceTest {
                 .orElse(null);
 
         // Perform the service call
-        this.s125WebSocketService.handleMessage(message);
+        this.s100WebSocketService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
         ArgumentCaptor<String> topicArgument = ArgumentCaptor.forClass(String.class);
@@ -197,7 +197,7 @@ class S125WebSocketServiceTest {
                 .orElse(null);
 
         // Perform the service call
-        this.s125WebSocketService.handleMessage(message);
+        this.s100WebSocketService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
         ArgumentCaptor<String> topicArgument = ArgumentCaptor.forClass(String.class);
@@ -240,9 +240,9 @@ class S125WebSocketServiceTest {
                 .orElse(null);
 
         // Perform the service calls
-        this.s125WebSocketService.handleMessage(message1);
-        this.s125WebSocketService.handleMessage(message2);
-        this.s125WebSocketService.handleMessage(message3);
+        this.s100WebSocketService.handleMessage(message1);
+        this.s100WebSocketService.handleMessage(message2);
+        this.s100WebSocketService.handleMessage(message3);
 
         // Verify that we didn't send any packets to the VDES port
         verify(this.webSocket, never()).convertAndSend(any(String.class), any(Object.class));

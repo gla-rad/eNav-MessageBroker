@@ -33,14 +33,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * The GeomesaS125 Class.
+ * The GeomesaS201 Class.
  * <p/>
- * The implementation of the S-125 data entries transported through the Geomesa
+ * The implementation of the S-201 data entries transported through the Geomesa
  * data-stores.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
-public class GeomesaS125 implements GeomesaData<S125Node>{
+public class GeomesaS201 implements GeomesaData<S201Node>{
 
     // Class Variables
     private SimpleFeatureType sft = null;
@@ -51,16 +51,16 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     /**
      * Empty Constructor
      */
-    public GeomesaS125() {
+    public GeomesaS201() {
 
     }
 
     /**
      * Constructor with a specified geometry area.
      *
-     * @param geometry the geometry of the GeomesaS125 object
+     * @param geometry the geometry of the GeomesaS201 object
      */
-    public GeomesaS125(Geometry geometry) {
+    public GeomesaS201(Geometry geometry) {
         this.geometry = geometry;
     }
 
@@ -89,7 +89,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
      */
     @Override
     public String getTypeName() {
-        return "S125";
+        return "S201";
     }
 
     /**
@@ -129,18 +129,18 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
      * follow the same construct as the definition provided in the simple
      * feature type.
      *
-     * @param s125Nodes     The list of AtoNs to generate the simple features
+     * @param s201Nodes     The list of AtoNs to generate the simple features
      * @return The simple features based on the provided object list
      */
     @Override
-    public List<SimpleFeature> getFeatureData(List<S125Node> s125Nodes) {
+    public List<SimpleFeature> getFeatureData(List<S201Node> s201Nodes) {
         if (features == null) {
             List<SimpleFeature> features = new ArrayList<>();
 
             // Use a geotools SimpleFeatureBuilder to create our features
             SimpleFeatureBuilder builder = new SimpleFeatureBuilder(getSimpleFeatureType());
 
-            for(S125Node node: s125Nodes) {
+            for(S201Node node: s201Nodes) {
                 builder.set("atonUID", node.getAtonUID());
                 builder.set("geom", node.getGeometry());
                 builder.set("content", node.getContent());
@@ -165,7 +165,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
      * @param features  The list of simple features to be used
      * @return The list of objects reconstructed
      */
-    public List<S125Node> retrieveData(List<SimpleFeature> features) {
+    public List<S201Node> retrieveData(List<SimpleFeature> features) {
         // A sanity check
         if(features == null) {
             return Collections.emptyList();
@@ -174,8 +174,8 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
         // Otherwise map all the provided features
         return features.stream()
                 .map(feature ->
-                        // Create the S125Node message
-                        new S125Node(
+                        // Create the S201Node message
+                        new S201Node(
                                 ((String)feature.getAttribute("atonUID")),
                                 GeoJSONUtils.createGeoJSONPoint(((Point)feature.getAttribute("geom")).getX(), ((Point)feature.getAttribute("geom")).getY()),
                                 ((String)feature.getAttribute("content"))
@@ -204,7 +204,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     /**
      * A subsequent filter to further refine the feature search.
      *
-     * In the current context of S125 this could be a generic polygon that
+     * In the current context of S201 this could be a generic polygon that
      * defines the area of a VDES station.
      *
      * @return The subsequent filter to further refine the search
