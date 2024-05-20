@@ -105,23 +105,30 @@ public class GeoJSONUtils {
                 .toList()
                 .toArray(new Coordinate[]{});
 
-        // For polygons, we expect the last point to match the first. If that
-        // is not the case, then try to add the extra point for sanity...
-        if(coordinates.length >= 3 &&  !coordinates[0].equals2D(coordinates[coordinates.length-1])) {
-            coordinates = (Coordinate[]) ArrayUtils.add(coordinates,
-                    new Coordinate(xy.get(0), xy.get(1)));
+        // First create a geometry factory
+        GeometryFactory factory = new GeometryFactory(
+                new PrecisionModel(),
+                Optional.ofNullable(srid).orElse(4326));
+
+        // The select the appropriate geometry for the input type
+        String geometryType;
+        if(coordinates.length <= 1) {
+            geometryType = "point";
+        } else if(coordinates.length <= 3 || !coordinates[0].equals2D(coordinates[coordinates.length-1])) {
+            geometryType = "linestring";
+        } else {
+            geometryType = "polygon";
         }
 
-        // First create Point geometry for any input type
-        GeometryFactory factory = new GeometryFactory(new PrecisionModel(), Optional.ofNullable(srid).orElse(4326));
-        Geometry geometry = switch (coordinates.length) {
-            case 0 -> factory.createPoint();
-            case 1 -> factory.createPoint(coordinates[0]);
-            case 2, 3 -> factory.createLineString(coordinates);
-            default -> factory.createPolygon(coordinates);
+        // And generate the matching geometry
+        Geometry geometry = switch (geometryType) {
+            case "point" -> factory.createPoint();
+            case "linestring" -> factory.createLineString(coordinates);
+            case "polygon" -> factory.createPolygon(coordinates);
+            default -> null;
         };
 
-        // Now convert into a JSON node
+        // Finally convert into a JSON node
         ObjectMapper om = new ObjectMapper();
         try {
             return om.readTree(new GeoJsonWriter().write(geometry));
@@ -175,14 +182,17 @@ public class GeoJSONUtils {
         JsonNode coordinates = lineString.get("coordinates");
         if(Objects.nonNull(type) && type.asText().equals("LineString") && Objects.nonNull(coordinates) && coordinates.isArray()) {
             final StringBuilder stringBuilder = new StringBuilder();
+            final AtomicBoolean startFlag = new AtomicBoolean(true);
             stringBuilder.append("LINESTRING (");
-            stringBuilder.append(coordinates.get(0).toString());
-            stringBuilder.append(" ");
-            stringBuilder.append(coordinates.get(1).toString());
-            stringBuilder.append(" ");
-            stringBuilder.append(coordinates.get(2).toString());
-            stringBuilder.append(" ");
-            stringBuilder.append(coordinates.get(3).toString());
+            coordinates.forEach(c1 -> {
+                // Make sure we don't add a comma separation in the beginning
+                if(!startFlag.getAndSet(false)) {
+                    stringBuilder.append(", ");
+                }
+                stringBuilder.append(c1.get(0));
+                stringBuilder.append(" ");
+                stringBuilder.append(c1.get(1));
+            });
             stringBuilder.append(")");
             return stringBuilder.toString();
         }

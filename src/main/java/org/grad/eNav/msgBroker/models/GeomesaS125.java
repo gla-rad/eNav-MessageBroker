@@ -32,8 +32,6 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.function.Predicate.not;
-
 /**
  * The GeomesaS125 Class.
  * <p/>
@@ -225,7 +223,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     public Filter getSubsetFilter() {
         // For no or invalid filters, just reject everything
         if(Optional.ofNullable(this.geometry)
-                .filter(not(Polygon.class::isInstance))
+                .filter(Polygon.class::isInstance)
                 .map(Geometry::isEmpty)
                 .orElse(Boolean.TRUE)) {
             return Filter.EXCLUDE;
