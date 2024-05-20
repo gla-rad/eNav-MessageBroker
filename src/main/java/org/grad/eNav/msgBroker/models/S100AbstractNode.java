@@ -101,6 +101,16 @@ public abstract class S100AbstractNode implements IJsonSerializable {
         return Objects.equals(geometry, that.geometry) && Objects.equals(content, that.content);
     }
 
+    /**
+     * A helper function that returns the geometry of the abstract node as a
+     * GeoJSON node.
+     *
+     * @return the geometry as GeoJSON
+     */
+    public JsonNode getGeometryAsJson() {
+        return GeometryJSONConverter.convertFromGeometry(this.geometry);
+    }
+
     /** {@inheritDoc} */
     @Override
     public int hashCode() {

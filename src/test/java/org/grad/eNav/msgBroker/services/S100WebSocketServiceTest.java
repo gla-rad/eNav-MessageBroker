@@ -138,7 +138,7 @@ class S100WebSocketServiceTest {
         Message<?> message = Optional.of(this.s124Xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.NAVIGATION_WARNING.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader(), this.s124Node.getMessageId()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -165,7 +165,7 @@ class S100WebSocketServiceTest {
         Message<?> message = Optional.of(this.s125Xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -192,7 +192,7 @@ class S100WebSocketServiceTest {
         Message<?> message = Optional.of(this.s201Xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -218,7 +218,7 @@ class S100WebSocketServiceTest {
         Message<?> message1 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.NAVIGATION_WARNING.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader(), this.s124Node.getMessageId()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s124Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -226,7 +226,7 @@ class S100WebSocketServiceTest {
         Message<?> message2 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -235,7 +235,7 @@ class S100WebSocketServiceTest {
         Message<?> message3 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometry()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 

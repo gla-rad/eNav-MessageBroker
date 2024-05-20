@@ -120,7 +120,7 @@ public class S100WebSocketService implements MessageHandler {
             // Get the Aton Node payload
             S124Node s124Node = new S124Node(
                     (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader()),
-                    GeometryJSONConverter.convertFromGeometry((Geometry) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader())),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
                     payload
             );
 
