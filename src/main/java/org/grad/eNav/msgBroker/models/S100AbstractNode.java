@@ -16,10 +16,13 @@
 
 package org.grad.eNav.msgBroker.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.spatial4j.io.jackson.GeometryAsGeoJSONSerializer;
 
 import java.util.Objects;
 
@@ -35,6 +38,7 @@ import java.util.Objects;
 public abstract class S100AbstractNode implements IJsonSerializable {
 
     // Class Variables
+    @JsonSerialize(using = GeometryAsGeoJSONSerializer.class)
     private Geometry geometry;
     private String content;
 
@@ -107,6 +111,7 @@ public abstract class S100AbstractNode implements IJsonSerializable {
      *
      * @return the geometry as GeoJSON
      */
+    @JsonIgnore
     public JsonNode getGeometryAsJson() {
         return GeometryJSONConverter.convertFromGeometry(this.geometry);
     }
