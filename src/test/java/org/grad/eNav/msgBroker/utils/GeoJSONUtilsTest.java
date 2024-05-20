@@ -80,6 +80,24 @@ public class GeoJSONUtilsTest {
         assertEquals("LineString", point00_3.get("type").textValue());
         assertEquals("[[-1,-2],[1,2]]", point00_3.get("coordinates").toString());
         assertEquals("EPSG:2810", point00_3.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point00_13 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        assertNotNull(point00_1);
+        assertEquals("LineString", point00_13.get("type").textValue());
+        assertEquals("[[0.0,0.0],[0.0,0.0],[0.0,0.0]]", point00_13.get("coordinates").toString());
+        assertEquals("EPSG:4326", point00_13.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point00_23 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{-1.0, -2.0, 1.0, 2.0, -1.0, -2.0}).toList());
+        assertNotNull(point00_2);
+        assertEquals("LineString", point00_23.get("type").textValue());
+        assertEquals("[[-1,-2],[1,2],[-1,-2]]", point00_23.get("coordinates").toString());
+        assertEquals("EPSG:4326", point00_23.get("crs").get("properties").get("name").textValue());
+
+        JsonNode point00_33 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{-1.0, -2.0, 1.0, 2.0, -1.0, -2.0}).toList(), 2810);
+        assertNotNull(point00_3);
+        assertEquals("LineString", point00_33.get("type").textValue());
+        assertEquals("[[-1,-2],[1,2],[-1,-2]]", point00_33.get("coordinates").toString());
+        assertEquals("EPSG:2810", point00_33.get("crs").get("properties").get("name").textValue());
     }
 
     /**
@@ -88,19 +106,19 @@ public class GeoJSONUtilsTest {
      */
     @Test
     public void testCreateGeoJSONPolygon() {
-        JsonNode polygon00000 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        JsonNode polygon00000 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
         assertNotNull(polygon00000);
         assertEquals("Polygon", polygon00000.get("type").textValue());
-        assertEquals("[[[0.0,0.0],[0.0,0.0],[0.0,0.0]]]", polygon00000.get("coordinates").toString());
+        assertEquals("[[[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0]]]", polygon00000.get("coordinates").toString());
         assertEquals("EPSG:4326", polygon00000.get("crs").get("properties").get("name").textValue());
 
-        JsonNode point12Square = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList());
+        JsonNode point12Square = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0}).toList());
         assertNotNull(point12Square);
         assertEquals("Polygon", point12Square.get("type").textValue());
         assertEquals("[[[1,2],[1,-2],[-1,-2],[-1,2],[1,2]]]", point12Square.get("coordinates").toString());
         assertEquals("EPSG:4326", point12Square.get("crs").get("properties").get("name").textValue());
 
-        JsonNode point12SquareCSR = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0, 1.0, 2.0}).toList(), 2810);
+        JsonNode point12SquareCSR = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{1.0, 2.0, 1.0, -2.0, -1.0, -2.0, -1.0, 2.0}).toList(), 2810);
         assertNotNull(point12SquareCSR);
         assertEquals("Polygon", point12SquareCSR.get("type").textValue());
         assertEquals("[[[1,2],[1,-2],[-1,-2],[-1,2],[1,2]]]", point12SquareCSR.get("coordinates").toString());
@@ -144,9 +162,9 @@ public class GeoJSONUtilsTest {
         String polygonEmpty = GeoJSONUtils.geoJSONPolygonToECQL(new ObjectMapper().createObjectNode());
         assertEquals("", polygonEmpty);
 
-        JsonNode polygon000000 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
+        JsonNode polygon000000 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}).toList());
         String polygon000000ECQL = GeoJSONUtils.geoJSONPolygonToECQL(polygon000000);
-        assertEquals("POLYGON ((0.0 0.0, 0.0 0.0, 0.0 0.0))", polygon000000ECQL);
+        assertEquals("POLYGON ((0.0 0.0, 0.0 0.0, 0.0 0.0, 0.0 0.0))", polygon000000ECQL);
 
         JsonNode polygonRandom = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{-26.630859, 53.956086, -26.630859, 58.995311, -8.876953, 58.995311, -8.876953, 53.956086, -26.630859, 53.956086}).toList());
         String polygonRandomECQL = GeoJSONUtils.geoJSONPolygonToECQL(polygonRandom);

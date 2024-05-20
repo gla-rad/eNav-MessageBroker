@@ -18,6 +18,7 @@ package org.grad.eNav.msgBroker.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.ArrayUtils;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
@@ -104,12 +105,19 @@ public class GeoJSONUtils {
                 .toList()
                 .toArray(new Coordinate[]{});
 
+        // For polygons, we expect the last point to match the first. If that
+        // is not the case, then try to add the extra point for sanity...
+        if(coordinates.length >= 3 &&  !coordinates[0].equals2D(coordinates[coordinates.length-1])) {
+            coordinates = (Coordinate[]) ArrayUtils.add(coordinates,
+                    new Coordinate(xy.get(0), xy.get(1)));
+        }
+
         // First create Point geometry for any input type
         GeometryFactory factory = new GeometryFactory(new PrecisionModel(), Optional.ofNullable(srid).orElse(4326));
         Geometry geometry = switch (coordinates.length) {
             case 0 -> factory.createPoint();
             case 1 -> factory.createPoint(coordinates[0]);
-            case 2 -> factory.createLineString(coordinates);
+            case 2, 3 -> factory.createLineString(coordinates);
             default -> factory.createPolygon(coordinates);
         };
 
