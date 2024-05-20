@@ -23,7 +23,6 @@ import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.grad.eNav.msgBroker.config.AtonListenerProperties;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.models.GeomesaS125;
 import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
@@ -34,16 +33,12 @@ import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.support.MessageBuilder;
@@ -54,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -108,7 +102,7 @@ class S125GDSServiceTest {
         this.xml = IOUtils.toString(in, StandardCharsets.UTF_8.name());
 
         // Also create a GeoJSON point geometry for our S125 message
-        JsonNode point = GeoJSONUtils.createGeoJSONPoint(53.61, 1.594);
+        JsonNode point = GeoJSONUtils.createGeoJSON(53.61, 1.594);
 
         // Now create the S125 node object
         this.s125Node = new S125Node("test_aton", point, this.xml);

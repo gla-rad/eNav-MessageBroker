@@ -16,7 +16,6 @@
 
 package org.grad.eNav.msgBroker.models;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.geotools.api.data.Query;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
@@ -25,15 +24,15 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.util.factory.Hints;
-import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.locationtech.geomesa.utils.interop.SimpleFeatureTypes;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.function.Predicate.not;
 
 /**
  * The GeomesaS125 Class.
@@ -111,17 +110,27 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
             StringBuilder attributes = new StringBuilder();
 
             attributes.append("atonUID:String,");
-            attributes.append("*geom:Polygon:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
+            attributes.append("*geom:Geometry:srid=4326,"); // the "*" denotes the default geometry (used for indexing)
             attributes.append("content:String");
 
             // create the simple-feature type - use the GeoMesa 'SimpleFeatureTypes' class for best compatibility
             // may also use geotools DataUtilities or SimpleFeatureTypeBuilder, but some features may not work
             sft = SimpleFeatureTypes.createType(getTypeName(), attributes.toString());
 
-            // use the user-data (hints) to specify which date field to use for primary indexing
-            // if not specified, the first date attribute (if any) will be used
-            // could also use ':default=true' in the attribute specification string
+            // use the user-data (hints) to specify which date field to use for
+            // primary indexing if not specified, the first date attribute (if
+            // any) will be used could also use ':default=true' in the attribute
+            // specification string
             sft.getUserData().put(SimpleFeatureTypes.DEFAULT_DATE_KEY, "atonUID");
+            // Trying to create a schema with mixed geometry type 'geom:Geometry'.
+            // Queries may be slower when using mixed geometries. If this is
+            // intentional, you may override this check by putting Boolean.TRUE
+            // into the SimpleFeatureType user data under the key
+            // 'geomesa.mixed.geometries' before calling createSchema, or
+            // by setting the system property 'geomesa.mixed.geometries' to
+            // 'true'. Otherwise, please specify a single geometry type (e.g.
+            // Point, LineString, Polygon, etc).
+            sft.getUserData().put("geomesa.mixed.geometries",Boolean.TRUE);
         }
         return sft;
     }
@@ -215,7 +224,10 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
     @Override
     public Filter getSubsetFilter() {
         // For no or invalid filters, just reject everything
-        if(Optional.ofNullable(geometry).map(Geometry::isEmpty).orElse(Boolean.TRUE)) {
+        if(Optional.ofNullable(this.geometry)
+                .filter(not(Polygon.class::isInstance))
+                .map(Geometry::isEmpty)
+                .orElse(Boolean.TRUE)) {
             return Filter.EXCLUDE;
         }
 
@@ -223,7 +235,7 @@ public class GeomesaS125 implements GeomesaData<S125Node>{
         // here, we use a polygon (POLYGON) predicate as an example. This is
         // useful for a general query area.
         try {
-            String cqlGeometry = "WITHIN(geom, Polygon(("
+            String cqlGeometry = "INTERSECTS(geom, Polygon(("
                     + Arrays.stream(this.geometry
                             .getCoordinates()).map(c -> c.getX() + " " + c.getY())
                             .collect(Collectors.joining(", "))

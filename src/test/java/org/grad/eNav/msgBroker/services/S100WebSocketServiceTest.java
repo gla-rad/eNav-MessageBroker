@@ -91,7 +91,7 @@ class S100WebSocketServiceTest {
         this.s201Xml = IOUtils.toString(s201In, StandardCharsets.UTF_8);
 
         // Also create a GeoJSON point geometry for our S125 message
-        JsonNode point = GeoJSONUtils.createGeoJSONPoint(53.61, 1.594);
+        JsonNode point = GeoJSONUtils.createGeoJSON(53.61, 1.594);
 
         // Now create the S125 node object
         this.s124Node = new S124Node("NW-001-01", point, this.s124Xml);
