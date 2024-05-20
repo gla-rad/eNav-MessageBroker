@@ -17,22 +17,21 @@
 package org.grad.eNav.msgBroker.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.api.data.DataStore;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
-import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
-import org.grad.eNav.msgBroker.models.GeomesaS125;
-import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
-import org.grad.eNav.msgBroker.models.PublicationType;
-import org.grad.eNav.msgBroker.models.S125Node;
-import org.geotools.api.filter.Filter;
+import org.grad.eNav.msgBroker.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -44,22 +43,20 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * The S125 Geomesa Data Store Service Class
+ * The S201 Geomesa Data Store Service Class
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
 @Service
 @Slf4j
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
-public class S125GDSService implements MessageHandler  {
+public class S201GDSService implements MessageHandler  {
 
     /**
      * The S-100 Publish Channel to listen to the S-100 messages.
@@ -93,7 +90,7 @@ public class S125GDSService implements MessageHandler  {
      */
     @PostConstruct
     public void init() {
-        log.info("Geomesa S125 Data Store Service is booting up...");
+        log.info("Geomesa S201 Data Store Service is booting up...");
 
         // Create the producer
         if(this.producer == null) {
@@ -103,8 +100,8 @@ public class S125GDSService implements MessageHandler  {
 
         // Create the AtoN Schema
         try {
-            this.createSchema(this.producer, new GeomesaS125().getSimpleFeatureType());
-            this.featureStore = (SimpleFeatureStore) this.producer.getFeatureSource(new GeomesaS125().getTypeName());
+            this.createSchema(this.producer, new GeomesaS201().getSimpleFeatureType());
+            this.featureStore = (SimpleFeatureStore) this.producer.getFeatureSource(new GeomesaS201().getTypeName());
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -120,7 +117,7 @@ public class S125GDSService implements MessageHandler  {
      */
     @PreDestroy
     public void destroy() {
-        log.info("Geomesa S125 Data Store Service is shutting down...");
+        log.info("Geomesa S201 Data Store Service is shutting down...");
         this.producer.dispose();
         if(this.s100PublishChannel != null) {
             this.s100PublishChannel.destroy();
@@ -144,7 +141,7 @@ public class S125GDSService implements MessageHandler  {
         String endpoint = Objects.toString(message.getHeaders().get(MessageHeaders.CONTENT_TYPE));
 
         // Check that the message type is correct
-        if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+        if(endpoint.compareTo(PublicationType.ADMIN_ATON.getType()) == 0) {
             // Check that this seems ot be a valid message
             if(!(message.getPayload() instanceof String)) {
                 log.warn("Message-Broker message handler received a message with erroneous format.");
@@ -152,16 +149,16 @@ public class S125GDSService implements MessageHandler  {
             }
 
             // Get the Aton Node payload
-            S125Node s125Node = new S125Node(
-                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
+            S201Node s201Node = new S201Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()),
                     (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
                     (String) message.getPayload()
             );
 
             // Now push the aton node down the Geomesa Data Store
-            this.pushAton(s125Node);
-        } else if(endpoint.compareTo(PublicationType.ATON_DEL.getType()) == 0) {
-            this.deleteAton((String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()));
+            this.pushAton(s201Node);
+        } else if(endpoint.compareTo(PublicationType.ADMIN_ATON_DEL.getType()) == 0) {
+            this.deleteAton((String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()));
         }
     }
 
@@ -184,20 +181,20 @@ public class S125GDSService implements MessageHandler  {
      * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently,
      * this only supports the Kafka Message Streams.
      *
-     * @param s125Node          The S-125 node to be pushed into the datastore
+     * @param s201Node          The S-201 node to be pushed into the datastore
      */
-    protected void pushAton(S125Node s125Node) {
+    protected void pushAton(S201Node s201Node) {
         // We need a valid producer to push the AtoN to
         if(this.producer == null) {
             throw new ValidationException("No valid Geomesa Data Store producer detected.");
         }
 
         // Translate the AtoNs to the Geomesa simple features
-        GeomesaS125 geomesaData = new GeomesaS125();
+        GeomesaS201 geomesaData = new GeomesaS201();
         try {
             this.writeFeatures(this.featureStore,
                     geomesaData.getSimpleFeatureType(),
-                    geomesaData.getFeatureData(Collections.singletonList(s125Node)));
+                    geomesaData.getFeatureData(Collections.singletonList(s201Node)));
         } catch (IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());

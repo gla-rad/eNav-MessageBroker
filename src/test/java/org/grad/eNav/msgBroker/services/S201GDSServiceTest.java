@@ -24,10 +24,7 @@ import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
-import org.grad.eNav.msgBroker.models.GeomesaS125;
-import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
-import org.grad.eNav.msgBroker.models.PublicationType;
-import org.grad.eNav.msgBroker.models.S125Node;
+import org.grad.eNav.msgBroker.models.*;
 import org.grad.eNav.msgBroker.utils.GeoJSONUtils;
 import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,20 +48,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
-class S125GDSServiceTest {
+class S201GDSServiceTest {
 
     /**
      * The Tested Service.
      */
     @InjectMocks
     @Spy
-    S125GDSService s125GDSService;
+    S201GDSService s201GDSService;
 
     /**
      * The S-100 Publish Channel mock to listen to the S-100 messages.
@@ -88,7 +87,7 @@ class S125GDSServiceTest {
 
     // Test Variables
     private String xml;
-    private S125Node s125Node;
+    private S201Node s201Node;
     private SimpleFeatureStore simpleFeatureStore;
 
     /**
@@ -96,62 +95,62 @@ class S125GDSServiceTest {
      */
     @BeforeEach
     void setup() throws IOException {
-        // First read a valid S-125 content to generate the publish-subscribe
+        // First read a valid S-201 content to generate the publish-subscribe
         // message for.
-        InputStream in = new ClassPathResource("s125-msg.xml").getInputStream();
+        InputStream in = new ClassPathResource("s201-msg.xml").getInputStream();
         this.xml = IOUtils.toString(in, StandardCharsets.UTF_8.name());
 
-        // Also create a GeoJSON point geometry for our S-125 message
+        // Also create a GeoJSON point geometry for our S-201 message
         JsonNode point = GeoJSONUtils.createGeoJSON(53.61, 1.594);
 
-        // Now create the S-125 node object
-        this.s125Node = new S125Node("test_aton", point, this.xml);
+        // Now create the S-201 node object
+        this.s201Node = new S201Node("test_aton", point, this.xml);
 
         // Also mock the Geomesa Simple Feature Store
         this.simpleFeatureStore = mock(SimpleFeatureStore.class);
-        this.s125GDSService.featureStore = this.simpleFeatureStore;
+        this.s201GDSService.featureStore = this.simpleFeatureStore;
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service can initialise correctly
+     * Test that the S-201 Geomesa Datastore service can initialise correctly
      * and subscribes to the AtoN publish subscribe channel.
      */
     @Test
     void testInit() {
         // Perform the service call
-        this.s125GDSService.init();
+        this.s201GDSService.init();
 
         // Verify that the service subscribed to the AtoN publish subscribe channel
-        verify(this.s100PublishChannel, times(1)).subscribe(this.s125GDSService);
-        verify(this.s100DeleteChannel, times(1)).subscribe(this.s125GDSService);
+        verify(this.s100PublishChannel, times(1)).subscribe(this.s201GDSService);
+        verify(this.s100DeleteChannel, times(1)).subscribe(this.s201GDSService);
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service will not initialise if a
+     * Test that the S-201 Geomesa Datastore service will not initialise if a
      * valid Geomesa Datastore does NOT exist.
      */
     @Test
     void testInitNoDatastore() {
         // Remove the datastore producer
-        this.s125GDSService.producer = null;
+        this.s201GDSService.producer = null;
 
         // Perform the service call
-        this.s125GDSService.init();
+        this.s201GDSService.init();
 
         // Verify that the service did NOT subscribe to the AtoN publish subscribe channel
-        verify(this.s100PublishChannel, never()).subscribe(this.s125GDSService);
-        verify(this.s100DeleteChannel, never()).subscribe(this.s125GDSService);
+        verify(this.s100PublishChannel, never()).subscribe(this.s201GDSService);
+        verify(this.s100DeleteChannel, never()).subscribe(this.s201GDSService);
     }
 
     /**
-     * Test that when the S-125 Geomesa Datastore service shuts down, the
+     * Test that when the S-201 Geomesa Datastore service shuts down, the
      * Geomesa datastore will be disposed and the Aton publish subscribe
      * channel subscription will be removed.
      */
     @Test
     void testDestroy() {
         // Perform the service call
-        this.s125GDSService.destroy();
+        this.s201GDSService.destroy();
 
         // Verify that the service shuts down gracefully
         verify(this.producer, times(1)).dispose();
@@ -160,95 +159,95 @@ class S125GDSServiceTest {
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service can process correctly the
+     * Test that the S-201 Geomesa Datastore service can process correctly the
      * AtoN messages published in the AtoN publish-subscribe channel.
      */
     @Test
     void testHandleMessageAton() {
-        doNothing().when(this.s125GDSService).pushAton(any());
+        doNothing().when(this.s201GDSService).pushAton(any());
 
         // Create a message to be handled
         Message message = Optional.of(this.xml).map(MessageBuilder::withPayload)
-                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeometryJSONConverter.convertFromGeometry(this.s125Node.getGeometry())))
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeometryJSONConverter.convertFromGeometry(this.s201Node.getGeometry())))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
         // Perform the service call
-        this.s125GDSService.handleMessage(message);
+        this.s201GDSService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
-        ArgumentCaptor<S125Node> s125NodeArgument = ArgumentCaptor.forClass(S125Node.class);
-        verify(this.s125GDSService, times(1)).pushAton(s125NodeArgument.capture());
+        ArgumentCaptor<S201Node> s201NodeArgument = ArgumentCaptor.forClass(S201Node.class);
+        verify(this.s201GDSService, times(1)).pushAton(s201NodeArgument.capture());
 
         // Verify the packet
-        assertEquals(this.s125Node, s125NodeArgument.getValue());
+        assertEquals(this.s201Node, s201NodeArgument.getValue());
     }
 
     /**
-     * Test that we can only send S-125 messages down to the Geomesa Datastore.
+     * Test that we can only send S-201 messages down to the Geomesa Datastore.
      */
     @Test
     void testHandleMessageAtonWrongPayload() {
         // Create a message to be handled
         Message message = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
-                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s201Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
         // Perform the service call
-        this.s125GDSService.handleMessage(message);
+        this.s201GDSService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
-        verify(this.s125GDSService, never()).pushAton(any());
+        verify(this.s201GDSService, never()).pushAton(any());
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service can process correctly the
+     * Test that the S-201 Geomesa Datastore service can process correctly the
      * AtoN deletion messages published in the AtoN deletion publish-subscribe
      * channel.
      */
     @Test
     void testHandleMessageAtonDelete() {
-        doNothing().when(this.s125GDSService).deleteAton(any());
+        doNothing().when(this.s201GDSService).deleteAton(any());
 
         // Create a message to be handled
         Message message = Optional.of("Deletion").map(MessageBuilder::withPayload)
-                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON_DEL.getType()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s201Node.getAtonUID()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
         // Perform the service call
-        this.s125GDSService.handleMessage(message);
+        this.s201GDSService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
         ArgumentCaptor<String> atonUidArgument = ArgumentCaptor.forClass(String.class);
-        verify(this.s125GDSService, times(1)).deleteAton(atonUidArgument.capture());
+        verify(this.s201GDSService, times(1)).deleteAton(atonUidArgument.capture());
 
         // Verify the packet
-        assertEquals(this.s125Node.getAtonUID(), atonUidArgument.getValue());
+        assertEquals(this.s201Node.getAtonUID(), atonUidArgument.getValue());
     }
 
     /**
      * Test that when the Geomesa Datastore service pushed an AtoN to the Kafka
-     * datastore, a GeomesaS125 message will be send to the Kafka message bus.
+     * datastore, a GeomesaS201 message will be send to the Kafka message bus.
      */
     @Test
     void testPushAton() throws IOException {
-        doNothing().when(this.s125GDSService).writeFeatures(any(), any(), any());
+        doNothing().when(this.s201GDSService).writeFeatures(any(), any(), any());
 
-        // Create a GeomesaS125 message for testing
-        GeomesaS125 geomesaData = new GeomesaS125();
+        // Create a GeomesaS201 message for testing
+        GeomesaS201 geomesaData = new GeomesaS201();
 
         // Perform the service call
-        this.s125GDSService.pushAton(this.s125Node);
+        this.s201GDSService.pushAton(this.s201Node);
 
         // Assert that the new feature created will be send down to the datastore
-        verify(this.s125GDSService, times(1)).writeFeatures(
+        verify(this.s201GDSService, times(1)).writeFeatures(
                 eq(this.simpleFeatureStore),
                 eq(geomesaData.getSimpleFeatureType()),
                 anyList()
@@ -262,11 +261,11 @@ class S125GDSServiceTest {
      */
     @Test
     void testPushAtonError() throws IOException {
-        doThrow(IOException.class).when(this.s125GDSService).writeFeatures(any(), any(), any());
+        doThrow(IOException.class).when(this.s201GDSService).writeFeatures(any(), any(), any());
 
         // Perform the service call
         assertThrows(InternalServerErrorException.class, () ->
-                this.s125GDSService.pushAton(this.s125Node)
+                this.s201GDSService.pushAton(this.s201Node)
         );
     }
 
@@ -276,14 +275,14 @@ class S125GDSServiceTest {
      */
     @Test
     void testDeleteAton() throws IOException, CQLException {
-        doNothing().when(this.s125GDSService).deleteFeatures(any(), any());
+        doNothing().when(this.s201GDSService).deleteFeatures(any(), any());
 
         // Perform the service call
-        this.s125GDSService.deleteAton(this.s125Node.getAtonUID());
+        this.s201GDSService.deleteAton(this.s201Node.getAtonUID());
 
         // Assert that the AtoN UID will be used to delete the matching features
         // from the datastore
-        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s125Node.getAtonUID() + "')" ));
+        verify(this.s201GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s201Node.getAtonUID() + "')" ));
     }
 
     /**
@@ -293,28 +292,28 @@ class S125GDSServiceTest {
      */
     @Test
     void testDeleteAtonError() throws IOException, CQLException {
-        doThrow(IOException.class).when(this.s125GDSService).deleteFeatures(any(), any());
+        doThrow(IOException.class).when(this.s201GDSService).deleteFeatures(any(), any());
 
         // Perform the service call
         assertThrows(InternalServerErrorException.class, () ->
-                this.s125GDSService.deleteAton(this.s125Node.getAtonUID())
+                this.s201GDSService.deleteAton(this.s201Node.getAtonUID())
         );
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service can write the incoming
+     * Test that the S-201 Geomesa Datastore service can write the incoming
      * messages as features to the respective datastore correctly.
      */
     @Test
     void testWriteFeatures() throws IOException {
-        // Create a GeomesaS125 message for testing
-        GeomesaS125 geomesaData = new GeomesaS125();
+        // Create a GeomesaS201 message for testing
+        GeomesaS201 geomesaData = new GeomesaS201();
 
         // Perform the service class
-        this.s125GDSService.writeFeatures(
+        this.s201GDSService.writeFeatures(
                 this.simpleFeatureStore,
                 geomesaData.getSimpleFeatureType(),
-                geomesaData.getFeatureData(Collections.singletonList(this.s125Node))
+                geomesaData.getFeatureData(Collections.singletonList(this.s201Node))
         );
 
         // Verify that the provided features were added to the datastore
@@ -322,13 +321,13 @@ class S125GDSServiceTest {
     }
 
     /**
-     * Test that the S-125 Geomesa Datastore service can delete published
+     * Test that the S-201 Geomesa Datastore service can delete published
      * messages as features from the respective datastore correctly.
      */
     @Test
     void testDeleteFeatures() throws IOException {
         // Perform the service class
-        this.s125GDSService.deleteFeatures(
+        this.s201GDSService.deleteFeatures(
                 this.simpleFeatureStore,
                 mock(Filter.class)
         );
