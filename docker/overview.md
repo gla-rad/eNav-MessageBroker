@@ -157,22 +157,6 @@ This can be done in the following way:
 
 Examples of the required properties files can be seen below.
 
-For bootstrapping, we need to disable the cloud config client, and clear out the
-environment variable inputs:
-    
-    server.port=8763
-    spring.application.name=msg-broker
-    spring.application.version=<application.version>
-    
-    # Disable the cloud config
-    spring.cloud.config.enabled=false
-    
-    # Clear out the environment variables
-    spring.cloud.config.uri=
-    spring.cloud.config.username=
-    spring.cloud.config.password=
-    spring.cloud.config.label=
-
 While the application properties need to provide the service with an OAuth2.0
 server like keycloak, logging configuration, the eureka client connection etc.:
 
@@ -186,6 +170,14 @@ server like keycloak, logging configuration, the eureka client connection etc.:
     service.variable.kafka.server.name=<kafka.server.name>
     service.variable.kafka.server.broker.port=<kafka.server.port>
     service.variable.kafka.server.zookeeper.port=<zookeeper.server.port>
+
+    # Service properties
+    server.port=8763
+    spring.application.name=msg-broker
+    spring.application.version=0.0.3
+    
+    # Disable the cloud config
+    spring.cloud.config.enabled=false
     
     # Eureka Client Configuration
     eureka.client.service-url.defaultZone=http://${service.variable.eureka.server.name}:${service.variable.eureka.server.port}/eureka/
