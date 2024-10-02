@@ -43,6 +43,9 @@ public class GeoJSONUtils {
     /**
      * A helper function that will return a GeoJSON Point object based on the
      * provided x and y coordinates.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the lat-lon order.
      *
      * @param x the x value of the coordinate
      * @param y the y value of the coordinate
@@ -55,6 +58,9 @@ public class GeoJSONUtils {
     /**
      * A helper function that will return a GeoJSON Point object based on the
      * geometry centroid for the provided list of x and y coordinates.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the lat-lon order.
      *
      * @param xy the list of xy coordinates to create the polygon from
      * @return the GeoJSON point object
@@ -67,9 +73,11 @@ public class GeoJSONUtils {
      * A helper function that will return a GeoJSON Point object based on the
      * provided x and y coordinates. This extended version also allows users
      * to define the coordinate reference system through the SRID parameter.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the reverse lat-lon order.
      *
      * @param x the x value of the coordinate
-     * @param y the y value of the coordinate
      * @param srid the default coordinate reference system ID - defaults to EPSG:4326
      * @return the GeoJSON point object
      */
@@ -93,6 +101,9 @@ public class GeoJSONUtils {
      * to form a geometry, for which the centroid point will be used to define
      * the final point. This extended version also allows users to define the
      * coordinate reference system through the SRID parameter.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the reverse lat-lon order.
      *
      * @param xy a list of xy coordinates to create the polygon from
      * @param srid the default coordinate reference system ID - defaults to EPSG:4326
@@ -122,7 +133,7 @@ public class GeoJSONUtils {
 
         // And generate the matching geometry
         Geometry geometry = switch (geometryType) {
-            case "point" -> factory.createPoint();
+            case "point" -> factory.createPoint(coordinates[0]);
             case "linestring" -> factory.createLineString(coordinates);
             case "polygon" -> factory.createPolygon(coordinates);
             default -> null;
@@ -140,6 +151,9 @@ public class GeoJSONUtils {
     /**
      * To easily translate a GeoJSON point to an ECQL point description, this
      * utility function reads the json node and if it is a valid geometry.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the lat-lon order.
      *
      * @param point the GeoJSON point to be translated
      * @return The ECQL description of the point
@@ -154,9 +168,9 @@ public class GeoJSONUtils {
         if(Objects.nonNull(type) && type.asText().equals("Point") && Objects.nonNull(coordinates) && coordinates.isArray()) {
             final StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("POINT (");
-            stringBuilder.append(coordinates.get(0).toString());
-            stringBuilder.append(" ");
             stringBuilder.append(coordinates.get(1).toString());
+            stringBuilder.append(" ");
+            stringBuilder.append(coordinates.get(0).toString());
             stringBuilder.append(")");
             return stringBuilder.toString();
         }
@@ -189,9 +203,9 @@ public class GeoJSONUtils {
                 if(!startFlag.getAndSet(false)) {
                     stringBuilder.append(", ");
                 }
-                stringBuilder.append(c1.get(0));
-                stringBuilder.append(" ");
                 stringBuilder.append(c1.get(1));
+                stringBuilder.append(" ");
+                stringBuilder.append(c1.get(0));
             });
             stringBuilder.append(")");
             return stringBuilder.toString();
@@ -225,9 +239,9 @@ public class GeoJSONUtils {
                     if(!startFlag.getAndSet(false)) {
                         stringBuilder.append(", ");
                     }
-                    stringBuilder.append(c2.get(0));
-                    stringBuilder.append(" ");
                     stringBuilder.append(c2.get(1));
+                    stringBuilder.append(" ");
+                    stringBuilder.append(c2.get(0));
                 });
             });
             stringBuilder.append("))");
