@@ -143,9 +143,9 @@ public class GeoJSONUtilsTest {
 
         JsonNode point12 = GeoJSONUtils.createGeoJSON(1, 2);
         String point12ECQL = GeoJSONUtils.geoJSONPointToECQL(point12);
-        assertEquals("POINT (2 1)", point12ECQL);
+        assertEquals("POINT (1 2)", point12ECQL);
 
-        JsonNode point18090 = GeoJSONUtils.createGeoJSON(180, 90);
+        JsonNode point18090 = GeoJSONUtils.createGeoJSON(90, 180);
         String point18090ECQL = GeoJSONUtils.geoJSONPointToECQL(point18090);
         assertEquals("POINT (90 180)", point18090ECQL);
     }
@@ -168,11 +168,11 @@ public class GeoJSONUtilsTest {
 
         JsonNode lineString12 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{-1.0, -2.0, 1.0, 2.0}).toList());
         String lineString12ECQL = GeoJSONUtils.geoJSONLineStringToECQL(lineString12);
-        assertEquals("LINESTRING (-2 -1, 2 1)", lineString12ECQL);
+        assertEquals("LINESTRING (-1 -2, 1 2)", lineString12ECQL);
 
         JsonNode lineString18090 = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{-90.0, -180.0, 90.0, 180.0}).toList());
         String ineString18090ECQL = GeoJSONUtils.geoJSONLineStringToECQL(lineString18090);
-        assertEquals("LINESTRING (-180 -90, 180 90)", ineString18090ECQL);
+        assertEquals("LINESTRING (-90 -180, 90 180)", ineString18090ECQL);
     }
 
     /**
@@ -193,7 +193,7 @@ public class GeoJSONUtilsTest {
 
         JsonNode polygonRandom = GeoJSONUtils.createGeoJSON(Arrays.stream(new Double[]{53.956086, -26.630859, 58.995311, -26.630859, 58.995311, -8.876953, 53.956086, -8.876953, 53.956086, -26.630859}).toList());
         String polygonRandomECQL = GeoJSONUtils.geoJSONPolygonToECQL(polygonRandom);
-        assertEquals("POLYGON ((-26.630859 53.956086, -26.630859 58.995311, -8.876953 58.995311, -8.876953 53.956086, -26.630859 53.956086))", polygonRandomECQL);
+        assertEquals("POLYGON ((53.956086 -26.630859, 58.995311 -26.630859, 58.995311 -8.876953, 53.956086 -8.876953, 53.956086 -26.630859))", polygonRandomECQL);
     }
 
 }

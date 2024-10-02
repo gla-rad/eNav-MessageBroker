@@ -18,7 +18,6 @@ package org.grad.eNav.msgBroker.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.ArrayUtils;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.geojson.GeoJsonWriter;
 
@@ -75,7 +74,7 @@ public class GeoJSONUtils {
      * to define the coordinate reference system through the SRID parameter.
      * <p/>
      * Note that in the default coordinate system SRS 4326, the x-y coordinates
-     * should them be mapped to the reverse lat-lon order.
+     * should them be mapped to the lat-lon order.
      *
      * @param x the x value of the coordinate
      * @param srid the default coordinate reference system ID - defaults to EPSG:4326
@@ -103,7 +102,7 @@ public class GeoJSONUtils {
      * coordinate reference system through the SRID parameter.
      * <p/>
      * Note that in the default coordinate system SRS 4326, the x-y coordinates
-     * should them be mapped to the reverse lat-lon order.
+     * should them be mapped to the lat-lon order.
      *
      * @param xy a list of xy coordinates to create the polygon from
      * @param srid the default coordinate reference system ID - defaults to EPSG:4326
@@ -168,9 +167,9 @@ public class GeoJSONUtils {
         if(Objects.nonNull(type) && type.asText().equals("Point") && Objects.nonNull(coordinates) && coordinates.isArray()) {
             final StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("POINT (");
-            stringBuilder.append(coordinates.get(1).toString());
-            stringBuilder.append(" ");
             stringBuilder.append(coordinates.get(0).toString());
+            stringBuilder.append(" ");
+            stringBuilder.append(coordinates.get(1).toString());
             stringBuilder.append(")");
             return stringBuilder.toString();
         }
@@ -183,6 +182,9 @@ public class GeoJSONUtils {
      * To easily translate a GeoJSON line string to an ECQL line string
      * description, this utility function reads the json node and if it is
      * a valid geometry.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the lat-lon order.
      *
      * @param lineString the GeoJSON line string to be translated
      * @return The ECQL description of the point
@@ -203,9 +205,9 @@ public class GeoJSONUtils {
                 if(!startFlag.getAndSet(false)) {
                     stringBuilder.append(", ");
                 }
-                stringBuilder.append(c1.get(1));
-                stringBuilder.append(" ");
                 stringBuilder.append(c1.get(0));
+                stringBuilder.append(" ");
+                stringBuilder.append(c1.get(1));
             });
             stringBuilder.append(")");
             return stringBuilder.toString();
@@ -218,6 +220,9 @@ public class GeoJSONUtils {
     /**
      * To easily translate a GeoJSON polygon to an ECQL polygon description,
      * this utility function reads the json node and if it is a valid geometry.
+     * <p/>
+     * Note that in the default coordinate system SRS 4326, the x-y coordinates
+     * should them be mapped to the lat-lon order.
      *
      * @param polygon the GeoJSON polygon to be translated
      * @return The ECQL description of the point
@@ -239,9 +244,9 @@ public class GeoJSONUtils {
                     if(!startFlag.getAndSet(false)) {
                         stringBuilder.append(", ");
                     }
-                    stringBuilder.append(c2.get(1));
-                    stringBuilder.append(" ");
                     stringBuilder.append(c2.get(0));
+                    stringBuilder.append(" ");
+                    stringBuilder.append(c2.get(1));
                 });
             });
             stringBuilder.append("))");
