@@ -47,7 +47,6 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
@@ -233,9 +232,7 @@ class SpringSecurityConfig {
                                 HealthEndpoint.class    //health endpoints
                         )).permitAll()
                         .requestMatchers(EndpointRequest.toAnyEndpoint()).hasRole("ACTUATOR")
-                        .requestMatchers(Arrays.stream(this.openResources)
-                                .map(AntPathRequestMatcher::new)
-                                .toArray(AntPathRequestMatcher[]::new)).permitAll()
+                        .requestMatchers(this.openResources).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
