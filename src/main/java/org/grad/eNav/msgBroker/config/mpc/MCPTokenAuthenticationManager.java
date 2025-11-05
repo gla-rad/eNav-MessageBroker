@@ -75,11 +75,15 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
      */
     @Override
     public Authentication authenticate(Authentication authentication) {
+        // Sanity Check
+        if(Objects.isNull(authentication) ||
+                Objects.nonNull(authentication.getCredentials()) ||
+                Objects.nonNull(authentication.getCredentials())) {
+            return null;
+        }
+
         // Make sure we have what appears to be valid authentication credentials
-        if(Objects.nonNull(authentication) &&
-                Objects.nonNull(authentication.getCredentials()) &&
-                Objects.nonNull(authentication.getCredentials()) &&
-                authentication.getCredentials() instanceof X509Certificate x509Certificate) {
+        if(authentication.getCredentials() instanceof X509Certificate x509Certificate) {
             // Retrieve the principles from the authorisation credentials
             final String mrn = (String)authentication.getPrincipal();
             final X500Principal x500Principal = ((X509Certificate)authentication.getCredentials()).getSubjectX500Principal();
@@ -105,18 +109,18 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
                         x500PrincipalMap.get(BCStyle.UID).startsWith(this.allowedPublishersMrn)
                 );
             }
-        }
 
-        // If authenticated, add the admin role since this is a supported publisher
-        if(authentication.isAuthenticated()) {
-            authentication = new PreAuthenticatedAuthenticationToken(
-                    authentication.getPrincipal(),
-                    authentication.getCredentials(),
-                    Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN")));
-        }
+            // If authenticated, add the admin role since this is a supported publisher
+            if(authentication.isAuthenticated()) {
+                authentication = new PreAuthenticatedAuthenticationToken(
+                        authentication.getPrincipal(),
+                        authentication.getCredentials(),
+                        Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN")));
+            }
 
-        // Return the authentication
-        log.debug("The final authentication decision was {}", authentication.isAuthenticated());
+            // Return the authentication
+            log.debug("The final authentication decision was {}", authentication.isAuthenticated());
+        }
 
         // Return the authentication
         return authentication;
