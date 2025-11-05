@@ -77,8 +77,8 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
     public Authentication authenticate(Authentication authentication) {
         // Sanity Check
         if(Objects.isNull(authentication) ||
-                Objects.nonNull(authentication.getCredentials()) ||
-                Objects.nonNull(authentication.getCredentials())) {
+                Objects.isNull(authentication.getPrincipal()) ||
+                Objects.isNull(authentication.getCredentials())) {
             return null;
         }
 
