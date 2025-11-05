@@ -139,7 +139,7 @@ public class S100PublishController {
      * @param content   The S-125 XML message to be published
      * @return The received AtoN along with the HTTP response
      */
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(
             value = "/s125/{atonUID}",
             consumes = {"application/gml+xml;charset=UTF-8"},
@@ -209,7 +209,7 @@ public class S100PublishController {
      * @param content   The S-201 XML message to be published
      * @return The received AtoN along with the HTTP response
      */
-//    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(
             value = "/s201/{atonUID}",
             consumes = {"application/gml+xml;charset=UTF-8"},

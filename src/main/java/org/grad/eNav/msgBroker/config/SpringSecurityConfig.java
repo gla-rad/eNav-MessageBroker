@@ -20,6 +20,9 @@ import jakarta.servlet.DispatcherType;
 import org.grad.eNav.msgBroker.config.keycloak.KeycloakGrantedAuthoritiesMapper;
 import org.grad.eNav.msgBroker.config.keycloak.KeycloakJwtAuthenticationConverter;
 import org.grad.eNav.msgBroker.config.keycloak.KeycloakLogoutHandler;
+import org.grad.eNav.msgBroker.config.mpc.MCPTokenAuthenticationProcessingFilter;
+import org.grad.eNav.msgBroker.config.mpc.MCPTokenAuthenticationManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.actuate.health.HealthEndpoint;
@@ -43,10 +46,12 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
@@ -77,6 +82,12 @@ class SpringSecurityConfig {
      */
     @Value("${gla.rad.msg-broker.resources.open:/,/index,/webjars/**,/css/**,/lib/**,/images/**,/src/**}")
     private String[] openResources;
+
+    /**
+     * The MCP Token Authentication Manager.
+     */
+    @Autowired
+    private MCPTokenAuthenticationManager mcpTokenAuthenticationManager;
 
     /**
      * The REST Template.
@@ -203,6 +214,8 @@ class SpringSecurityConfig {
      * Allows open access to the health and info actuator endpoints.
      * All other actuator endpoints are only available for the actuator role.
      * Finally, all other exchanges need to be authenticated.
+     *
+     * @return the built security filter chain
      */
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Bean
@@ -240,6 +253,12 @@ class SpringSecurityConfig {
                                 .jwtAuthenticationConverter(keycloakJwtAuthenticationConverter())
                         )
                 );
+
+        // Add the MCP Token Authentication Provider to parse MCP Certificates headers
+        http.addFilterAfter(new MCPTokenAuthenticationProcessingFilter(
+                        PathPatternRequestMatcher.withDefaults().matcher("/publish/**"),
+                        this.mcpTokenAuthenticationManager),
+                        AnonymousAuthenticationFilter.class);
 
         // Disable the CSRF
         http.csrf(AbstractHttpConfigurer::disable);
