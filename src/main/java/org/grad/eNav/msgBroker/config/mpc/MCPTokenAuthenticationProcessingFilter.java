@@ -87,7 +87,7 @@ public class MCPTokenAuthenticationProcessingFilter extends AbstractAuthenticati
         // Sanity check
         if(request.getHeader(SecomRequestHeaders.MRN_HEADER) == null
                 || request.getHeader(SecomRequestHeaders.CERT_HEADER) == null) {
-            return null;
+            return getAuthenticationManager().authenticate(null);
         }
 
         //Declare the final variables

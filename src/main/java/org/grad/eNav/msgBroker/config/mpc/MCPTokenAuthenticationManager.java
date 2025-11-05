@@ -76,7 +76,10 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
     @Override
     public Authentication authenticate(Authentication authentication) {
         // Make sure we have what appears to be valid authentication credentials
-        if(Objects.nonNull(authentication.getCredentials()) && (authentication.getCredentials() instanceof X509Certificate x509Certificate)) {
+        if(Objects.nonNull(authentication) &&
+                Objects.nonNull(authentication.getCredentials()) &&
+                Objects.nonNull(authentication.getCredentials()) &&
+                authentication.getCredentials() instanceof X509Certificate x509Certificate) {
             // Retrieve the principles from the authorisation credentials
             final String mrn = (String)authentication.getPrincipal();
             final X500Principal x500Principal = ((X509Certificate)authentication.getCredentials()).getSubjectX500Principal();
@@ -102,8 +105,6 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
                         x500PrincipalMap.get(BCStyle.UID).startsWith(this.allowedPublishersMrn)
                 );
             }
-        } else {
-            authentication.setAuthenticated(false);
         }
 
         // If authenticated, add the admin role since this is a supported publisher
@@ -116,6 +117,8 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
 
         // Return the authentication
         log.debug("The final authentication decision was {}", authentication.isAuthenticated());
+
+        // Return the authentication
         return authentication;
     }
 
