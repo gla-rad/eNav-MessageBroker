@@ -46,7 +46,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.firewall.HttpFirewall;
@@ -255,10 +255,10 @@ class SpringSecurityConfig {
                 );
 
         // Add the MCP Token Authentication Provider to parse MCP Certificates headers
-        http.addFilterAfter(new MCPTokenAuthenticationProcessingFilter(
+        http.addFilterBefore(new MCPTokenAuthenticationProcessingFilter(
                         PathPatternRequestMatcher.withDefaults().matcher("/publish/**"),
                         this.mcpTokenAuthenticationManager),
-                        AnonymousAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class);
 
         // Disable the CSRF
         http.csrf(AbstractHttpConfigurer::disable);

@@ -62,8 +62,27 @@ public class MCPTokenAuthenticationProcessingFilter extends AbstractAuthenticati
     public MCPTokenAuthenticationProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher,
                                                   AuthenticationManager authenticationManager) {
         super(requiresAuthenticationRequestMatcher);
-        //Set authentication manager
+
+        // Set authentication manager
         setAuthenticationManager(authenticationManager);
+
+        // Also set a converter from the headers to the MCP certificate
+        setAuthenticationConverter(request -> {
+            //Declare the final variables
+            final String mrn;
+            final X509Certificate certificate;
+
+            // Extract the information from the request headers
+            try {
+                mrn = request.getHeader(SecomRequestHeaders.MRN_HEADER);
+                certificate = getCertFromPem(request.getHeader(SecomRequestHeaders.CERT_HEADER));
+            } catch (Exception ex) {
+                throw new MCPHeaderAuthenticationException(ex.getMessage(), ex);
+            }
+
+            // Create a token object ot pass to Authentication Provider
+            return new PreAuthenticatedAuthenticationToken(mrn, certificate, new HashSet<>());
+        });
     }
 
     /**
@@ -84,27 +103,13 @@ public class MCPTokenAuthenticationProcessingFilter extends AbstractAuthenticati
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
-        // Sanity check
-        if(request.getHeader(SecomRequestHeaders.MRN_HEADER) == null
-                || request.getHeader(SecomRequestHeaders.CERT_HEADER) == null) {
-            return getAuthenticationManager().authenticate(null);
+        // Sanity check - If not appropriate headers move on
+        if(request.getHeader(SecomRequestHeaders.MRN_HEADER) == null || request.getHeader(SecomRequestHeaders.CERT_HEADER) == null) {
+            return null;
         }
 
-        //Declare the final variables
-        final String mrn;
-        final X509Certificate certificate;
-
-        // Extract the information from the request headers
-        try {
-            mrn = request.getHeader(SecomRequestHeaders.MRN_HEADER);
-            certificate = getCertFromPem(request.getHeader(SecomRequestHeaders.CERT_HEADER));
-        } catch (Exception ex) {
-            throw new MCPHeaderAuthenticationException(ex.getMessage(), ex);
-        }
-
-        // Create a token object ot pass to Authentication Provider
-        PreAuthenticatedAuthenticationToken token = new PreAuthenticatedAuthenticationToken(mrn, certificate, new HashSet<>());
-        return getAuthenticationManager().authenticate(token);
+        // Otherwise, continue the authentication process as normal
+        return super.attemptAuthentication(request, response);
     }
 
     /**

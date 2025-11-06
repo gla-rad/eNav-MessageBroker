@@ -86,7 +86,7 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
         if(authentication.getCredentials() instanceof X509Certificate x509Certificate) {
             // Retrieve the principles from the authorisation credentials
             final String mrn = (String)authentication.getPrincipal();
-            final X500Principal x500Principal = ((X509Certificate)authentication.getCredentials()).getSubjectX500Principal();
+            final X500Principal x500Principal = x509Certificate.getSubjectX500Principal();
             final Map<ASN1ObjectIdentifier,String> x500PrincipalMap = this.parseX509Principal(x500Principal);
 
             // TODO: Perform more thorough checks
@@ -104,18 +104,17 @@ public class MCPTokenAuthenticationManager implements AuthenticationManager {
             // If the allowed organisations are restricted, apply that to the access
             if(Strings.isNotBlank(this.allowedPublishersMrn)) {
                 log.debug("Allowed publishing entities are with MRN prefix {}", this.allowedPublishersMrn);
-                authentication.setAuthenticated(
-                        mrn.startsWith(this.allowedPublishersMrn) &&
-                        x500PrincipalMap.get(BCStyle.UID).startsWith(this.allowedPublishersMrn)
-                );
-            }
 
-            // If authenticated, add the admin role since this is a supported publisher
-            if(authentication.isAuthenticated()) {
-                authentication = new PreAuthenticatedAuthenticationToken(
-                        authentication.getPrincipal(),
-                        authentication.getCredentials(),
-                        Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN")));
+                // Test that the MRNs all match
+                if(Objects.equals(mrn, x500PrincipalMap.get(BCStyle.UID)) &&
+                        mrn.startsWith(this.allowedPublishersMrn) &&
+                        x500PrincipalMap.get(BCStyle.UID).startsWith(this.allowedPublishersMrn)) {
+                    // If authenticated, add the admin role since this is a supported publisher
+                    authentication = new PreAuthenticatedAuthenticationToken(
+                            authentication.getPrincipal(),
+                            authentication.getCredentials(),
+                            Collections.singleton(new SimpleGrantedAuthority("ROLE_ADMIN")));
+                }
             }
 
             // Return the authentication
