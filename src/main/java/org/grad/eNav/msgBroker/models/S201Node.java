@@ -24,34 +24,34 @@ import java.util.Objects;
  * The S201 Node Class.
  *
  * This node extends the S-100 abstract node to implement the S-201 messages
- * including the AtoN UID value.
+ * including the S-201 Dataset UID value.
  *
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
 public class S201Node extends S100AbstractNode {
 
     // Class Variables
-    private String atonUID;
+    private String datasetUID;
 
     /**
      * The Fully Populated  Constructor.
      *
-     * @param atonUID       The AtoN UID
+     * @param datasetUID       The AtoN UID
      * @param geometry       The object geometry
      * @param content       The XML content
      */
-    public S201Node(String atonUID, JsonNode geometry, String content) {
+    public S201Node(String datasetUID, JsonNode geometry, String content) {
         super(geometry, content);
-        this.atonUID = atonUID;
+        this.datasetUID = datasetUID;
     }
 
     /**
      * Sets new atonUID.
      *
-     * @param atonUID New value of atonUID.
+     * @param datasetUID New value of atonUID.
      */
-    public void setAtonUID(String atonUID) {
-        this.atonUID = atonUID;
+    public void setDatasetUID(String datasetUID) {
+        this.datasetUID = datasetUID;
     }
 
     /**
@@ -59,8 +59,8 @@ public class S201Node extends S100AbstractNode {
      *
      * @return Value of atonUID.
      */
-    public String getAtonUID() {
-        return atonUID;
+    public String getDatasetUID() {
+        return datasetUID;
     }
 
     /** {@inheritDoc} */
@@ -70,13 +70,13 @@ public class S201Node extends S100AbstractNode {
         if (!(o instanceof S201Node)) return false;
         if (!super.equals(o)) return false;
         S201Node s125Node = (S201Node) o;
-        return Objects.equals(atonUID, s125Node.atonUID);
+        return Objects.equals(datasetUID, s125Node.datasetUID);
     }
 
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), atonUID);
+        return Objects.hash(super.hashCode(), datasetUID);
     }
 
 }

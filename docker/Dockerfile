@@ -23,7 +23,7 @@ LABEL org.opencontainers.image.source="https://github.com/gla-rad/eNav-MessageBr
 WORKDIR /app
 
 # Copy the Spring Boot JAR file into the container
-COPY target/message-broker-0.0.3-SNAPSHOT.jar .
+COPY target/message-broker-0.0.4-SNAPSHOT.jar .
 
 # Create a modules path just in case
 ENV LOADER_PATH /modules
@@ -37,4 +37,4 @@ ENV CONFIG_DIR=/conf
 
 EXPOSE 8763
 
-CMD ["java", "-jar", "message-broker-0.0.3-SNAPSHOT.jar", "--spring.config.location=optional:classpath:/,optional:file:${CONFIG_DIR}/"]
+CMD ["java", "-jar", "message-broker-0.0.4-SNAPSHOT.jar", "--spring.config.location=optional:classpath:/,optional:file:${CONFIG_DIR}/"]

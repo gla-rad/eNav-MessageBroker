@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The S-100 Publish Controller Class
@@ -42,7 +43,7 @@ import java.util.Optional;
  * @author Nikolaos Vastardis (email: Nikolaos.Vastardis@gla-rad.org)
  */
 @RestController
-@RequestMapping("/publish")
+@RequestMapping("/api/publish")
 @Slf4j
 public class S100PublishController {
 
@@ -134,17 +135,17 @@ public class S100PublishController {
      * Receives an S-125 message  as a REST POST request and pushes it as a
      * publication to the Geomesa Data Store.
      *
-     * @param atonUID   The S-125 AtoN UID to be published
+     * @param datasetUID   The S-125 dataset UID to be published
      * @param geometry  The geometry to publish the S-125 for
-     * @param content   The S-125 XML message to be published
+     * @param content   The S-125 dataset XML to be published
      * @return The received AtoN along with the HTTP response
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(
-            value = "/s125/{atonUID}",
+            value = "/s125/{datasetUID}",
             consumes = {"application/gml+xml;charset=UTF-8"},
             produces = {"application/gml+xml;charset=UTF-8"})
-    public ResponseEntity<String> publishS125(@PathVariable("atonUID") String atonUID,
+    public ResponseEntity<String> publishS125(@PathVariable("datasetUID") String datasetUID,
                                               @RequestParam List<Double> geometry,
                                               @RequestBody String content) {
         // Publish the AtoN message
@@ -153,7 +154,7 @@ public class S100PublishController {
                     .map(MessageBuilder::withPayload)
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType());
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), datasetUID);
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
                         return builder;
                     })
@@ -170,22 +171,27 @@ public class S100PublishController {
     }
 
     /**
-     * Receives an S-125 AtoN UID as a REST DELETE request and forwards it as a
-     * publication deletion from the Geomesa Data Store.
+     * Receives a list of S-125 AtoN UIDs as a REST DELETE request and forwards
+     * it as a publication deletion from the Geomesa Data Store.
      *
-     * @param atonUID   The S-125 AtoN UID to be deleted
+     * @param datasetUID    The S-125 dataset UID with the AtoNs to be deleted
+     * @param geometry      The overall geometry of the AtoNs to be deleted
+     * @param atonUIDs      The list of UIDs of the AtoNs to be deleted
      * @return The deleted AtoN along with the HTTP response
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @DeleteMapping(value = "/s125/{atonUID}")
-    public ResponseEntity<String> deleteS125(@PathVariable("atonUID") String atonUID) {
+    @DeleteMapping(value = "/s125/{datasetUID}")
+    public ResponseEntity<String> deleteS125Dataset(@PathVariable("datasetUID") String datasetUID,
+                                                    @RequestParam List<Double> geometry,
+                                                    @RequestBody Set<String> atonUIDs) {
         // Publish the AtoN deletion message
         try {
-            Optional.of("Deletion")
+            Optional.of(atonUIDs)
                     .map(MessageBuilder::withPayload)
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType());
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), atonUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), datasetUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
                         return builder;
                     })
                     .map(MessageBuilder::build)
@@ -204,17 +210,17 @@ public class S100PublishController {
      * Receives an S-201 message  as a REST POST request and pushes it as a
      * publication to the Geomesa Data Store.
      *
-     * @param atonUID   The S-201 AtoN UID to be published
+     * @param datasetUID   The S-201 dataset UID to be published
      * @param geometry  The geometry to publish the S125 for
-     * @param content   The S-201 XML message to be published
+     * @param content   The S-201 dataset XML to be published
      * @return The received AtoN along with the HTTP response
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping(
-            value = "/s201/{atonUID}",
+            value = "/s201/{datasetUID}",
             consumes = {"application/gml+xml;charset=UTF-8"},
             produces = {"application/gml+xml;charset=UTF-8"})
-    public ResponseEntity<String> publishS201(@PathVariable("atonUID") String atonUID,
+    public ResponseEntity<String> publishS201(@PathVariable("datasetUID") String datasetUID,
                                               @RequestParam List<Double> geometry,
                                               @RequestBody String content) {
         // Publish the AtoN message
@@ -223,7 +229,7 @@ public class S100PublishController {
                     .map(MessageBuilder::withPayload)
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON.getType());
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), atonUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), datasetUID);
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
                         return builder;
                     })
@@ -243,19 +249,24 @@ public class S100PublishController {
      * Receives an S-201 AtoN UID as a REST DELETE request and forwards it as a
      * publication deletion from the Geomesa Data Store.
      *
-     * @param atonUID   The S-201 AtoN UID to be deleted
+     * @param datasetUID    The S-201 dataset UID with the AtoNs to be deleted
+     * @param geometry      The overall geometry of the AtoNs to be deleted
+     * @param atonUIDs      The list of UIDs of the AtoNs to be deleted
      * @return The deleted AtoN along with the HTTP response
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @DeleteMapping(value = "/s201/{atonUID}")
-    public ResponseEntity<String> deleteS201(@PathVariable("atonUID") String atonUID) {
+    @DeleteMapping(value = "/s201/{datasetUID}")
+    public ResponseEntity<String> deleteS201Dataset(@PathVariable("datasetUID") String datasetUID,
+                                                    @RequestParam List<Double> geometry,
+                                                    @RequestBody Set<String> atonUIDs) {
         // Publish the AtoN deletion message
         try {
-            Optional.of("Deletion")
+            Optional.of(atonUIDs)
                     .map(MessageBuilder::withPayload)
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON_DEL.getType());
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), atonUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), datasetUID);
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
                         return builder;
                     })
                     .map(MessageBuilder::build)

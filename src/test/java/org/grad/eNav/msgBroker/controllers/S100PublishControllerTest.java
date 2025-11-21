@@ -16,6 +16,7 @@
 
 package org.grad.eNav.msgBroker.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.grad.eNav.msgBroker.TestingConfiguration;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,16 +25,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -53,27 +55,31 @@ class S100PublishControllerTest {
     /**
      * The S-100 Publish Channel mock to publish the incoming S-100 messages to.
      */
-    @MockBean
+    @MockitoBean
     @Qualifier("s100PublishChannel")
     PublishSubscribeChannel s100PublishChannel;
 
     /**
      * The S-100 Delete Channel mock to publish the incoming S-100 message deletions to.
      */
-    @MockBean
+    @MockitoBean
     @Qualifier("s100DeleteChannel")
     PublishSubscribeChannel s100DeleteChannel;
 
     // Test Variables
+    private ObjectMapper objectMapper;
     private String s124Xml;
     private String s125Xml;
     private String s201Xml;
+
 
     /**
      * Common setup for all the tests.
      */
     @BeforeEach
     void setUp() throws IOException {
+        this.objectMapper = new ObjectMapper();
+
         // First read a valid S-124 content to generate the pub-sub message for.
         InputStream inS124 = new ClassPathResource("s124-msg.xml").getInputStream();
         this.s124Xml = IOUtils.toString(inS124, StandardCharsets.UTF_8);
@@ -93,7 +99,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS124() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(post("/publish/s124/{nwUID}", "NW-01-002")
+        MvcResult mvcResult = this.mockMvc.perform(post("/api/publish/s124/{nwUID}", "NW-01-002")
                         .contentType("application/gml+xml;charset=UTF-8")
                         .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
                         .content(this.s124Xml))
@@ -112,7 +118,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS124BadRequest() throws Exception {
         // Perform the MVC request
-        this.mockMvc.perform(post("/publish/s124/{nwUID}", "NW-01-002")
+        this.mockMvc.perform(post("/api/publish/s124/{nwUID}", "NW-01-002")
                         .contentType("application/gml+xml;charset=UTF-8")
                         .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594"))
                 .andExpect(status().isBadRequest());
@@ -126,7 +132,7 @@ class S100PublishControllerTest {
     @Test
     void testDeleteS124() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(delete("/publish/s124/{nwUID}", "NW-01-002"))
+        this.mockMvc.perform(delete("/api/publish/s124/{nwUID}", "NW-01-002"))
                 .andExpect(status().isOk())
                 .andReturn();
     }
@@ -138,7 +144,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS125() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(post("/publish/s125/{atonUID}", "aton.uk.test_aton")
+        MvcResult mvcResult = this.mockMvc.perform(post("/api/publish/s125/{datasetUID}", "aton.uk.test_aton")
                 .contentType("application/gml+xml;charset=UTF-8")
                 .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
                 .content(this.s125Xml))
@@ -157,7 +163,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS125BadRequest() throws Exception {
         // Perform the MVC request
-        this.mockMvc.perform(post("/publish/s125/{atonUID}", "aton.uk.test_aton")
+        this.mockMvc.perform(post("/api/publish/s125/{datasetUID}", "aton.uk.test_aton")
                 .contentType("application/gml+xml;charset=UTF-8")
                 .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594"))
                 .andExpect(status().isBadRequest());
@@ -170,7 +176,10 @@ class S100PublishControllerTest {
     @Test
     void testDeleteS125() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(delete("/publish/s125/{atonUID}", "aton.uk.test_aton"))
+        this.mockMvc.perform(delete("/api/publish/s125/{datasetUID}", "testDataset")
+                        .contentType("application/json;charset=UTF-8")
+                        .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
+                        .content(this.objectMapper.writeValueAsString(Collections.singletonList("aton.uk.test_aton"))))
                 .andExpect(status().isOk())
                 .andReturn();
     }
@@ -182,7 +191,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS201() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(post("/publish/s201/{atonUID}", "aton.uk.test_aton")
+        MvcResult mvcResult = this.mockMvc.perform(post("/api/publish/s201/{datasetUID}", "testDataset")
                         .contentType("application/gml+xml;charset=UTF-8")
                         .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
                         .content(this.s201Xml))
@@ -201,7 +210,7 @@ class S100PublishControllerTest {
     @Test
     void testPublishS201BadRequest() throws Exception {
         // Perform the MVC request
-        this.mockMvc.perform(post("/publish/s201/{atonUID}", "aton.uk.test_aton")
+        this.mockMvc.perform(post("/api/publish/s201/{datasetUID}", "testDataset")
                         .contentType("application/gml+xml;charset=UTF-8")
                         .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594"))
                 .andExpect(status().isBadRequest());
@@ -215,7 +224,10 @@ class S100PublishControllerTest {
     @Test
     void testDeleteS201() throws Exception {
         // Perform the MVC request
-        MvcResult mvcResult = this.mockMvc.perform(delete("/publish/s201/{atonUID}", "aton.uk.test_aton"))
+        this.mockMvc.perform(delete("/api/publish/s201/{datasetUID}", "testDataset")
+                        .contentType("application/json;charset=UTF-8")
+                        .param("geometry", "53.61, 1.594, 53.61, 1.594, 53.61, 1.594")
+                        .content(this.objectMapper.writeValueAsString(Collections.singletonList("aton.uk.test_aton"))))
                 .andExpect(status().isOk())
                 .andReturn();
     }

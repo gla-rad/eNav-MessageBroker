@@ -19,8 +19,6 @@ package org.grad.eNav.msgBroker.services;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.grad.eNav.msgBroker.models.*;
-import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
-import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,7 +143,7 @@ public class S100WebSocketService implements MessageHandler {
             );
 
             // A simple debug message;
-            log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getAtonUID()));
+            log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getDatasetUID()));
 
             // Now push the AtoN node down the web-socket stream
             this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
@@ -165,7 +163,7 @@ public class S100WebSocketService implements MessageHandler {
             );
 
             // A simple debug message;
-            log.debug(String.format("Received Admin AtoN Message with UID: %s.", s201Node.getAtonUID()));
+            log.debug(String.format("Received Admin AtoN Message with UID: %s.", s201Node.getDatasetUID()));
 
             // Now push the Admin AtoN node down the web-socket stream
             this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s201Node);

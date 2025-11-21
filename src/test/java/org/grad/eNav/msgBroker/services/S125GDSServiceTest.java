@@ -170,7 +170,7 @@ class S125GDSServiceTest {
         // Create a message to be handled
         Message message = Optional.of(this.xml).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getDatasetUID()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeometryJSONConverter.convertFromGeometry(this.s125Node.getGeometry())))
                 .map(MessageBuilder::build)
                 .orElse(null);
@@ -194,7 +194,7 @@ class S125GDSServiceTest {
         // Create a message to be handled
         Message message = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getDatasetUID()))
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometry()))
                 .map(MessageBuilder::build)
                 .orElse(null);
@@ -218,7 +218,7 @@ class S125GDSServiceTest {
         // Create a message to be handled
         Message message = Optional.of("Deletion").map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getAtonUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getDatasetUID()))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -230,7 +230,7 @@ class S125GDSServiceTest {
         verify(this.s125GDSService, times(1)).deleteAton(atonUidArgument.capture());
 
         // Verify the packet
-        assertEquals(this.s125Node.getAtonUID(), atonUidArgument.getValue());
+        assertEquals(this.s125Node.getDatasetUID(), atonUidArgument.getValue());
     }
 
     /**
@@ -279,11 +279,11 @@ class S125GDSServiceTest {
         doNothing().when(this.s125GDSService).deleteFeatures(any(), any());
 
         // Perform the service call
-        this.s125GDSService.deleteAton(this.s125Node.getAtonUID());
+        this.s125GDSService.deleteAton(this.s125Node.getDatasetUID());
 
         // Assert that the AtoN UID will be used to delete the matching features
         // from the datastore
-        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s125Node.getAtonUID() + "')" ));
+        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s125Node.getDatasetUID() + "')" ));
     }
 
     /**
@@ -297,7 +297,7 @@ class S125GDSServiceTest {
 
         // Perform the service call
         assertThrows(InternalServerErrorException.class, () ->
-                this.s125GDSService.deleteAton(this.s125Node.getAtonUID())
+                this.s125GDSService.deleteAton(this.s125Node.getDatasetUID())
         );
     }
 

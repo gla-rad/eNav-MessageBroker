@@ -27,11 +27,17 @@ import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.filter.Filter;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.filter.FidFilterImpl;
+import org.geotools.filter.GeometryFilterImpl;
+import org.geotools.filter.spatial.CrossesImpl;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.exceptions.ValidationException;
 import org.grad.eNav.msgBroker.models.*;
+import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKTWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -44,9 +50,8 @@ import org.springframework.messaging.MessagingException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The S201 Geomesa Data Store Service Class
@@ -158,7 +163,18 @@ public class S201GDSService implements MessageHandler  {
             // Now push the aton node down the Geomesa Data Store
             this.pushAton(s201Node);
         } else if(endpoint.compareTo(PublicationType.ADMIN_ATON_DEL.getType()) == 0) {
-            this.deleteAton((String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()));
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof Set<?>)) {
+                log.warn("Message-Broker message handler received a message with erroneous format.");
+                return;
+            }
+
+            // Get the message payload
+            final Set<?> atonUIDs = (Set<?>) message.getPayload();
+            final JsonNode geometryJSON = (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader());
+            final Geometry geometry = GeometryJSONConverter.convertToGeometry(geometryJSON);
+
+            this.deleteAtons(atonUIDs, geometry);
         }
     }
 
@@ -202,15 +218,16 @@ public class S201GDSService implements MessageHandler  {
     }
 
     /**
-     * Pushes a new/updated AtoN node into the Geomesa Data Store. Currently,
-     * this only supports the Kafka Message Streams. Also in the used Geomesa
-     * implementation (3.3.0 in the time of writing) only ID filtering is
-     * supporting for the feature removals, so geometry has to stay out for
-     * the time being.
+     * Pushes a list of AtoN UIDs to be deleted into the Geomesa Data Store.
+     * Currently, this only supports the Kafka Message Streams. Since
+     * geomesa version 5.0 we can also add geometry in the filter so
+     * the geometry of the area (as published by the user) is also
+     * included in the filter.
      *
-     * @param atonUid           The AtoN UID to be deleted from the datastore
+     * @param atonUIDs      The AtoN UID to be deleted from the datastore
+     * @param  geometry     The geometry that is affected by the deletion
      */
-    protected void deleteAton(String atonUid) {
+    protected void deleteAtons(Set<?> atonUIDs, Geometry geometry) {
         // We need a valid producer to push the AtoN to
         if(this.producer == null) {
             throw new ValidationException("No valid Geomesa Data Store producer detected.");
@@ -219,7 +236,13 @@ public class S201GDSService implements MessageHandler  {
         // Translate the AtoNs UID to the Geomesa ECQl filters
         try {
             this.deleteFeatures(this.featureStore,
-                    ECQL.toFilter("id in ('" + atonUid + "')" ));
+                    ECQL.toFilter("IN ('"
+                            + atonUIDs.stream()
+                                .map(String::valueOf)
+                                .collect(Collectors.joining("','"))
+                            + "') and CROSSES(geom, "
+                            + new WKTWriter().write(geometry)
+                            + ")"));
         } catch (CQLException | IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());

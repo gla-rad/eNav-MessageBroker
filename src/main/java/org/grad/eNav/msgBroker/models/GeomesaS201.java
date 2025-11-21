@@ -151,7 +151,7 @@ public class GeomesaS201 implements GeomesaData<S201Node>{
             SimpleFeatureBuilder builder = new SimpleFeatureBuilder(getSimpleFeatureType());
 
             for(S201Node node: s201Nodes) {
-                builder.set("atonUID", node.getAtonUID());
+                builder.set("atonUID", node.getDatasetUID());
                 builder.set("geom", node.getGeometry());
                 builder.set("content", node.getContent());
 
@@ -160,7 +160,7 @@ public class GeomesaS201 implements GeomesaData<S201Node>{
 
                 // build the feature - this also resets the feature builder for the next entry
                 // use the AtoN UID as the feature ID
-                features.add(builder.buildFeature(node.getAtonUID()));
+                features.add(builder.buildFeature(node.getDatasetUID()));
             }
             this.features = Collections.unmodifiableList(features);
         }
