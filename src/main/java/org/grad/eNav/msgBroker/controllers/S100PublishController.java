@@ -29,6 +29,7 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -182,7 +183,7 @@ public class S100PublishController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping(value = "/s125/{datasetUID}")
     public ResponseEntity<String> deleteS125Dataset(@PathVariable("datasetUID") String datasetUID,
-                                                    @RequestParam List<Double> geometry,
+                                                    @RequestParam(required = false) List<Double> geometry,
                                                     @RequestBody Set<String> atonUIDs) {
         // Publish the AtoN deletion message
         try {
@@ -191,7 +192,8 @@ public class S100PublishController {
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType());
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), datasetUID);
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(),
+                                GeoJSONUtils.createGeoJSON(Optional.ofNullable(geometry).orElse(Collections.emptyList())));
                         return builder;
                     })
                     .map(MessageBuilder::build)
@@ -257,7 +259,7 @@ public class S100PublishController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping(value = "/s201/{datasetUID}")
     public ResponseEntity<String> deleteS201Dataset(@PathVariable("datasetUID") String datasetUID,
-                                                    @RequestParam List<Double> geometry,
+                                                    @RequestParam(required = false) List<Double> geometry,
                                                     @RequestBody Set<String> atonUIDs) {
         // Publish the AtoN deletion message
         try {
@@ -266,7 +268,8 @@ public class S100PublishController {
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON_DEL.getType());
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), datasetUID);
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), GeoJSONUtils.createGeoJSON(geometry));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(),
+                                GeoJSONUtils.createGeoJSON(Optional.ofNullable(geometry).orElse(Collections.emptyList())));
                         return builder;
                     })
                     .map(MessageBuilder::build)
