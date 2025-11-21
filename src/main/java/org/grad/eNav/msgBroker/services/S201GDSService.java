@@ -219,10 +219,10 @@ public class S201GDSService implements MessageHandler  {
 
     /**
      * Pushes a list of AtoN UIDs to be deleted into the Geomesa Data Store.
-     * Currently, this only supports the Kafka Message Streams. Since
-     * geomesa version 5.0 we can also add geometry in the filter so
-     * the geometry of the area (as published by the user) is also
-     * included in the filter.
+     * Currently, this only supports the Kafka Message Streams. Also in the
+     * used Geomesa implementation (3.3.0 in the time of writing) only ID
+     * filtering is support for the feature removals, so geometry has to
+     * stay out for the time being.
      *
      * @param atonUIDs      The AtoN UID to be deleted from the datastore
      * @param  geometry     The geometry that is affected by the deletion
@@ -240,9 +240,11 @@ public class S201GDSService implements MessageHandler  {
                             + atonUIDs.stream()
                                 .map(String::valueOf)
                                 .collect(Collectors.joining("','"))
-                            + "') and CROSSES(geom, "
-                            + new WKTWriter().write(geometry)
-                            + ")"));
+                            + "')"
+//                            + " and INTERSECTS(geom, "
+//                            + new WKTWriter().write(geometry)
+//                            + ")"
+                    ));
         } catch (CQLException | IOException e) {
             log.error(e.getMessage());
             throw new InternalServerErrorException(e.getMessage());

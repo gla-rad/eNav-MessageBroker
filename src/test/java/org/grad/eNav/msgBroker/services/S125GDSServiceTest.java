@@ -23,6 +23,7 @@ import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
+import org.geotools.geometry.jts.GeometryBuilder;
 import org.grad.eNav.msgBroker.exceptions.InternalServerErrorException;
 import org.grad.eNav.msgBroker.models.GeomesaS125;
 import org.grad.eNav.msgBroker.models.PubSubMsgHeaders;
@@ -33,6 +34,7 @@ import org.grad.eNav.msgBroker.utils.GeometryJSONConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Geometry;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -50,6 +52,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -88,6 +91,7 @@ class S125GDSServiceTest {
 
     // Test Variables
     private String xml;
+    private JsonNode point;
     private S125Node s125Node;
     private SimpleFeatureStore simpleFeatureStore;
 
@@ -102,7 +106,7 @@ class S125GDSServiceTest {
         this.xml = IOUtils.toString(in, StandardCharsets.UTF_8.name());
 
         // Also create a GeoJSON point geometry for our S-125 message
-        JsonNode point = GeoJSONUtils.createGeoJSON(53.61, 1.594);
+        this.point = GeoJSONUtils.createGeoJSON(53.61, 1.594);
 
         // Now create the S-125 node object
         this.s125Node = new S125Node("test_aton", point, this.xml);
@@ -213,12 +217,13 @@ class S125GDSServiceTest {
      */
     @Test
     void testHandleMessageAtonDelete() {
-        doNothing().when(this.s125GDSService).deleteAton(any());
+        doNothing().when(this.s125GDSService).deleteAtons(any(), any());
 
         // Create a message to be handled
-        Message message = Optional.of("Deletion").map(MessageBuilder::withPayload)
+        Message<?> message = Optional.of(Collections.singleton(this.s125Node.getDatasetUID())).map(MessageBuilder::withPayload)
                 .map(builder -> builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ATON_DEL.getType()))
-                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader(), this.s125Node.getDatasetUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), this.s125Node.getDatasetUID()))
+                .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.point))
                 .map(MessageBuilder::build)
                 .orElse(null);
 
@@ -226,11 +231,12 @@ class S125GDSServiceTest {
         this.s125GDSService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
-        ArgumentCaptor<String> atonUidArgument = ArgumentCaptor.forClass(String.class);
-        verify(this.s125GDSService, times(1)).deleteAton(atonUidArgument.capture());
+        ArgumentCaptor<Set<?>> atonUidsArgument = ArgumentCaptor.forClass(Set.class);
+        ArgumentCaptor<Geometry>geometryArgument = ArgumentCaptor.forClass(Geometry.class);
+        verify(this.s125GDSService, times(1)).deleteAtons(atonUidsArgument.capture(), geometryArgument.capture());
 
         // Verify the packet
-        assertEquals(this.s125Node.getDatasetUID(), atonUidArgument.getValue());
+        assertEquals(Collections.singleton(this.s125Node.getDatasetUID()), atonUidsArgument.getValue());
     }
 
     /**
@@ -275,15 +281,15 @@ class S125GDSServiceTest {
      * Kafka datastore, the datastore delete feature function will be called.
      */
     @Test
-    void testDeleteAton() throws IOException, CQLException {
+    void testDeleteAtons() throws IOException, CQLException {
         doNothing().when(this.s125GDSService).deleteFeatures(any(), any());
 
         // Perform the service call
-        this.s125GDSService.deleteAton(this.s125Node.getDatasetUID());
+        this.s125GDSService.deleteAtons(Collections.singleton(this.s125Node.getDatasetUID()), new GeometryBuilder().point(53.61, 1.594));
 
         // Assert that the AtoN UID will be used to delete the matching features
         // from the datastore
-        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("id in ('" + this.s125Node.getDatasetUID() + "')" ));
+        verify(this.s125GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("IN ('" + this.s125Node.getDatasetUID() + "')"/*+ " and CROSSES(geom, POINT (53.61 1.594))"*/));
     }
 
     /**
@@ -292,12 +298,12 @@ class S125GDSServiceTest {
      * will be thrown.
      */
     @Test
-    void testDeleteAtonError() throws IOException, CQLException {
+    void testDeleteAtonsError() throws IOException, CQLException {
         doThrow(IOException.class).when(this.s125GDSService).deleteFeatures(any(), any());
 
         // Perform the service call
         assertThrows(InternalServerErrorException.class, () ->
-                this.s125GDSService.deleteAton(this.s125Node.getDatasetUID())
+                this.s125GDSService.deleteAtons(Collections.singleton(this.s125Node.getDatasetUID()), new GeometryBuilder().point(53.61, 1.594))
         );
     }
 

@@ -230,12 +230,12 @@ class S201GDSServiceTest {
         this.s201GDSService.handleMessage(message);
 
         // Verify that we send a packet to the VDES port and get that packet
-        ArgumentCaptor<Set<?>> atonUIDsArgument = ArgumentCaptor.forClass(Set.class);
+        ArgumentCaptor<Set<?>> atonUidsArgument = ArgumentCaptor.forClass(Set.class);
         ArgumentCaptor<Geometry>geometryArgument = ArgumentCaptor.forClass(Geometry.class);
-        verify(this.s201GDSService, times(1)).deleteAtons(atonUIDsArgument.capture(), geometryArgument.capture());
+        verify(this.s201GDSService, times(1)).deleteAtons(atonUidsArgument.capture(), geometryArgument.capture());
 
         // Verify the packet
-        assertEquals(Collections.singleton(this.s201Node.getDatasetUID()), atonUIDsArgument.getValue());
+        assertEquals(Collections.singleton(this.s201Node.getDatasetUID()), atonUidsArgument.getValue());
     }
 
     /**
@@ -288,7 +288,7 @@ class S201GDSServiceTest {
 
         // Assert that the AtoN UID will be used to delete the matching features
         // from the datastore
-        verify(this.s201GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("IN ('" + this.s201Node.getDatasetUID() + "') and CROSSES(geom, POINT (53.61 1.594))" ));
+        verify(this.s201GDSService, times(1)).deleteFeatures(this.simpleFeatureStore, ECQL.toFilter("IN ('" + this.s201Node.getDatasetUID() + "')"/*+ " and CROSSES(geom, POINT (53.61 1.594))"*/));
     }
 
     /**
