@@ -110,10 +110,10 @@ public class GeoJSONUtils {
      */
     public static JsonNode createGeoJSON(List<Double> xy, Integer srid) {
         // Collect the coordinates to an array
-        Coordinate[] coordinates = IntStream.range(0, xy.size()/2)
+        Coordinate[] coordinates = Objects.nonNull(xy) ? IntStream.range(0, xy.size()/2)
                 .mapToObj(i -> new Coordinate(xy.get(i*2), xy.get(i*2+1)))
                 .toList()
-                .toArray(new Coordinate[]{});
+                .toArray(new Coordinate[]{}) : new Coordinate[]{};
 
         // First create a geometry factory
         GeometryFactory factory = new GeometryFactory(
@@ -121,8 +121,8 @@ public class GeoJSONUtils {
                 Optional.ofNullable(srid).orElse(4326));
 
         // The select the appropriate geometry for the input type
-        String geometryType;
-        if(coordinates.length <= 1) {
+        final String geometryType;
+        if(coordinates.length == 1) {
             geometryType = "point";
         } else if(coordinates.length <= 3 || !coordinates[0].equals2D(coordinates[coordinates.length-1])) {
             geometryType = "linestring";

@@ -268,8 +268,7 @@ public class S100PublishController {
                     .map(builder -> {
                         builder.setHeader(MessageHeaders.CONTENT_TYPE, PublicationType.ADMIN_ATON_DEL.getType());
                         builder.setHeader(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader(), datasetUID);
-                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(),
-                                GeoJSONUtils.createGeoJSON(Optional.ofNullable(geometry).orElse(Collections.emptyList())));
+                        builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(),GeoJSONUtils.createGeoJSON(geometry));
                         return builder;
                     })
                     .map(MessageBuilder::build)
