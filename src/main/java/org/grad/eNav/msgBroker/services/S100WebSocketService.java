@@ -32,7 +32,11 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * The S100 Web-Socket Service Class
@@ -66,6 +70,13 @@ public class S100WebSocketService implements MessageHandler {
     PublishSubscribeChannel s100PublishChannel;
 
     /**
+     * The S-100 Delete Channel to listen to the S-100 message deletions.
+     */
+    @Autowired
+    @Qualifier("s100DeleteChannel")
+    PublishSubscribeChannel s100DeleteChannel;
+
+    /**
      * Attach the web-socket as a simple messaging template
      */
     @Autowired
@@ -80,6 +91,7 @@ public class S100WebSocketService implements MessageHandler {
     public void init() {
         log.info("AtoN Message Web Socket Service is booting up...");
         this.s100PublishChannel.subscribe(this);
+        this.s100DeleteChannel.subscribe(this);
     }
 
     /**
@@ -91,6 +103,9 @@ public class S100WebSocketService implements MessageHandler {
         log.info("AtoN Message Web Socket Service is shutting down...");
         if(this.s100PublishChannel != null) {
             this.s100PublishChannel.destroy();
+        }
+        if(this.s100DeleteChannel != null) {
+            this.s100DeleteChannel.destroy();
         }
     }
 
@@ -127,8 +142,26 @@ public class S100WebSocketService implements MessageHandler {
 
             // Now push the Navigation Warning node down the web-socket stream
             this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s124Node);
-        }
-        else if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
+        } else if(endpoint.compareTo(PublicationType.NAVIGATION_WARNING_DEL.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof Collection<?> payload)) {
+                log.warn("Web-Socket message handler received a Navigation Warning Deletion message with erroneous format.");
+                return;
+            }
+
+            // Get the Aton Node payload
+            S124Node s124Node = new S124Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S124_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    payload.stream().map(String::valueOf).collect(Collectors.joining(","))
+            );
+
+            // A simple debug message;
+            log.debug(String.format("Received Navigation Warning Deletion message with UID: %s.", s124Node.getMessageId()));
+
+            // Now push the Navigation Warning node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s124Node);
+        } else if(endpoint.compareTo(PublicationType.ATON.getType()) == 0) {
             // Check that this seems ot be a valid message
             if(!(message.getPayload() instanceof String payload)) {
                 log.warn("Web-Socket message handler received an AtoN message with erroneous format.");
@@ -143,12 +176,30 @@ public class S100WebSocketService implements MessageHandler {
             );
 
             // A simple debug message;
-            log.debug(String.format("Received AtoN Message with UID: %s.", s125Node.getDatasetUID()));
+            log.debug(String.format("Received AtoN message with UID: %s.", s125Node.getDatasetUID()));
 
             // Now push the AtoN node down the web-socket stream
             this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
-        }
-        else if(endpoint.compareTo(PublicationType.ADMIN_ATON.getType()) == 0) {
+        } else if(endpoint.compareTo(PublicationType.ATON_DEL.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof Collection<?> payload)) {
+                log.warn("Web-Socket message handler received an AtoN Deletion message with erroneous format.");
+                return;
+            }
+
+            // Get the Aton Node payload
+            S125Node s125Node = new S125Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S125_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    payload.stream().map(String::valueOf).collect(Collectors.joining(","))
+            );
+
+            // A simple debug message;
+            log.debug(String.format("Received AtoN Deletion message with UID: %s.", s125Node.getDatasetUID()));
+
+            // Now push the AtoN node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s125Node);
+        } else if(endpoint.compareTo(PublicationType.ADMIN_ATON.getType()) == 0 ) {
             // Check that this seems ot be a valid message
             if(!(message.getPayload() instanceof String payload)) {
                 log.warn("Web-Socket message handler received an Admin AtoN message with erroneous format.");
@@ -163,7 +214,26 @@ public class S100WebSocketService implements MessageHandler {
             );
 
             // A simple debug message;
-            log.debug(String.format("Received Admin AtoN Message with UID: %s.", s201Node.getDatasetUID()));
+            log.debug(String.format("Received Admin AtoN message with UID: %s.", s201Node.getDatasetUID()));
+
+            // Now push the Admin AtoN node down the web-socket stream
+            this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s201Node);
+        } else if(endpoint.compareTo(PublicationType.ADMIN_ATON_DEL.getType()) == 0) {
+            // Check that this seems ot be a valid message
+            if(!(message.getPayload() instanceof Collection<?> payload)) {
+                log.warn("Web-Socket message handler received an Admin AtoN Deletion message with erroneous format.");
+                return;
+            }
+
+            // Get the Admin Aton Node payload
+            S201Node s201Node = new S201Node(
+                    (String) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_S201_ID.getHeader()),
+                    (JsonNode) message.getHeaders().get(PubSubMsgHeaders.PUBSUB_GEOM.getHeader()),
+                    payload.stream().map(String::valueOf).collect(Collectors.joining(","))
+            );
+
+            // A simple debug message;
+            log.debug(String.format("Received Admin AtoN Deletion message with UID: %s.", s201Node.getDatasetUID()));
 
             // Now push the Admin AtoN node down the web-socket stream
             this.pushNode(this.webSocket, String.format("/%s/%s", prefix, endpoint), s201Node);

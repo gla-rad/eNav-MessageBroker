@@ -62,6 +62,12 @@ class S100WebSocketServiceTest {
     PublishSubscribeChannel s100PublishChannel;
 
     /**
+     * The S-100 Delete Channel to listen to the S-100 message deletions.
+     */
+    @Mock
+    PublishSubscribeChannel s100DeleteChannel;
+
+    /**
      * The Web Socket mock.
      */
     @Mock
@@ -113,6 +119,7 @@ class S100WebSocketServiceTest {
         this.s100WebSocketService.init();
 
         verify(this.s100PublishChannel, times(1)).subscribe(this.s100WebSocketService);
+        verify(this.s100DeleteChannel, times(1)).subscribe(this.s100WebSocketService);
     }
 
     /**
@@ -125,6 +132,7 @@ class S100WebSocketServiceTest {
         this.s100WebSocketService.destroy();
 
         verify(this.s100PublishChannel, times(1)).destroy();
+        verify(this.s100DeleteChannel, times(1)).destroy();
     }
 
     /**
@@ -229,7 +237,6 @@ class S100WebSocketServiceTest {
                 .map(builder -> builder.setHeader(PubSubMsgHeaders.PUBSUB_GEOM.getHeader(), this.s125Node.getGeometryAsJson()))
                 .map(MessageBuilder::build)
                 .orElse(null);
-
 
         // Another message for S-201
         Message<?> message3 = Optional.of(Collections.singleton("this is just not a string")).map(MessageBuilder::withPayload)

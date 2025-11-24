@@ -81,20 +81,38 @@ function showMessage(endpoint, msg) {
     // Handle Atons
     else if(endpoint === "aton") {
         // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.atonUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
         // Add the content XML as text
-        $("#" + msg.atonUID + noOfMessages + "Content").text(msg.content);
+        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
+    }
+    // Handle Aton Deletions
+    else if(endpoint === "aton-delete") {
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+        // Add the content XML as text
+        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
     }
     // Handle Admin Atons
     else if(endpoint === "admin-aton") {
         // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.atonUID
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
             + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.atonUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
         // Add the content XML as text
-        $("#" + msg.atonUID + noOfMessages + "Content").text(msg.content);
+        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
+    }
+    // Handle Admin Aton Deletions
+    else if(endpoint === "admin-aton-delete") {
+        // And add the entry to the table
+        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
+            + "</td><td class=\"col-4\">" + new Date() + "</td>"
+            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
+        // Add the content XML as text
+        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
     }
     // For any other type
     else {
