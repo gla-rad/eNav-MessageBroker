@@ -256,7 +256,7 @@ class SpringSecurityConfig {
 
         // Add the MCP Token Authentication Provider to parse MCP Certificates headers
         http.addFilterBefore(new MCPTokenAuthenticationProcessingFilter(
-                        PathPatternRequestMatcher.withDefaults().matcher("/publish/**"),
+                        PathPatternRequestMatcher.withDefaults().matcher("/api/publish/**"),
                         this.mcpTokenAuthenticationManager),
                         UsernamePasswordAuthenticationFilter.class);
 
