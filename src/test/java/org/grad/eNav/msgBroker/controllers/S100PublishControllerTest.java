@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = S100PublishController.class)
+@WebMvcTest(controllers = S100PublishController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
 @Import(TestingConfiguration.class)
 class S100PublishControllerTest {
 
