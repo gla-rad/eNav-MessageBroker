@@ -59,7 +59,7 @@ public class GeometryJSONConverter {
      * @return the geometry
      */
     public static Geometry convertToGeometry(JsonNode jsonNode) {
-        if (jsonNode == null  || jsonNode.toString() == "null" || jsonNode.asText() == "null") {
+        if (jsonNode == null  || jsonNode.toString() == "null") {
             return null;
         }
 
