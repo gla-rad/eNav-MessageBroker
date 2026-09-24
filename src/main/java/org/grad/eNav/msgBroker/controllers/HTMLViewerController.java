@@ -83,6 +83,7 @@ public class HTMLViewerController {
     @GetMapping("/index")
     public String index(Model model) {
         // Add the properties to the UI model
+        model.addAttribute("page", "index");
         model.addAttribute("endpoints", Arrays.asList(PublicationType.values())
                 .stream()
                 .map(PublicationType::getType)
@@ -102,6 +103,7 @@ public class HTMLViewerController {
      */
     @GetMapping("/about")
     public String about(Model model) {
+        model.addAttribute("page", "about");
         model.addAttribute("appName", this.appName);
         model.addAttribute("appVersion", this.appVersion);
         model.addAttribute("appOperatorName", this.appOperatorName);

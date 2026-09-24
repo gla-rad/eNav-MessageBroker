@@ -9,13 +9,29 @@ var maxNoOfMessages = 10;
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
-    if (connected) {
-        $("#incoming").show();
-    }
-    else {
-        $("#incoming").hide();
-    }
+    $("#connectionStatus")
+        .toggleClass("tag-success", connected)
+        .toggleClass("tag-danger", !connected)
+        .html(`<i class="fa-solid fa-circle"></i>${connected ? 'Connected' : 'Disconnected'}`);
+    clearMessages();
+}
+
+/**
+ * Empties the message table and resets the counter.
+ */
+function clearMessages() {
     $("#incoming").html("");
+    noOfMessages = 0;
+    updateMessageCount();
+}
+
+/**
+ * Keeps the message counter and the empty state in sync with the table.
+ */
+function updateMessageCount() {
+    $("#messageCount").text(noOfMessages);
+    $("#messages").toggle(noOfMessages > 0);
+    $("#messagesEmpty").toggle(noOfMessages === 0);
 }
 
 /**
@@ -29,12 +45,14 @@ function connect() {
         stompClient = Stomp.over(socket);
         stompClient.connect({}, (frame) => {
             setConnected(true);
+            showToast(`Listening on the ${endpoint} subject`, 'success');
             stompClient.subscribe('/topic/' + endpoint, (msg) => {
                 showMessage(endpoint, JSON.parse(msg.body));
             });
         });
     } else {
         setConnected(true);
+        showToast(`Listening on the ${endpoint} subject`, 'success');
         stompClient.subscribe('/topic/' + endpoint, (msg) => {
             showMessage(endpoint, JSON.parse(msg.body));
         });
@@ -66,64 +84,41 @@ function disconnect() {
 function showMessage(endpoint, msg) {
     // For too many messages clear out the incoming table
     if(noOfMessages >= maxNoOfMessages) {
-        $("#incoming").html("");
-        noOfMessages = 0;
+        clearMessages();
     }
+
+    // Pick the identifier based on the type of the publication
+    var id = null;
+    var content = null;
+    var known = true;
     // Handle Navigation Warnings
     if(endpoint === "navigation-warning") {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.messageId
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.messageId + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
-        // Add the content XML as text
-        $("#" + msg.messageId + noOfMessages + "Content").text(msg.content);
+        id = msg.messageId;
+        content = msg.content;
     }
-    // Handle Atons
-    else if(endpoint === "aton") {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
-        // Add the content XML as text
-        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
-    }
-    // Handle Aton Deletions
-    else if(endpoint === "aton-delete") {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
-        // Add the content XML as text
-        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
-    }
-    // Handle Admin Atons
-    else if(endpoint === "admin-aton") {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
-        // Add the content XML as text
-        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
-    }
-    // Handle Admin Aton Deletions
-    else if(endpoint === "admin-aton-delete") {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + msg.datasetUID
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td id=\"" + msg.datasetUID + noOfMessages + "Content\" class=\"col-4 overflow-auto\" style=\"max-height: 150px\"></td>");
-        // Add the content XML as text
-        $("#" + msg.datasetUID + noOfMessages + "Content").text(msg.content);
+    // Handle Atons, Aton Deletions, Admin Atons and Admin Aton Deletions
+    else if(["aton", "aton-delete", "admin-aton", "admin-aton-delete"].includes(endpoint)) {
+        id = msg.datasetUID;
+        content = msg.content;
     }
     // For any other type
     else {
-        // And add the entry to the table
-        $("#incoming").append("<tr class=\"d-flex\"><td class=\"col-4\">" + "unknown"
-            + "</td><td class=\"col-4\">" + new Date() + "</td>"
-            + "</td><td class=\"col-4\">" + "N/A" + "</td></tr>");
+        known = false;
     }
+
+    // And add the entry to the table
+    var row = $("<tr>"
+        + "<td>" + (known ? renderIdentifier(id) : '<span class="cell-muted">unknown</span>') + "</td>"
+        + "<td class=\"text-nowrap\">" + renderDateTime(new Date()) + "</td>"
+        + "<td>" + (known ? "<pre class=\"code-view message-content\"></pre>" : '<span class="cell-muted">N/A</span>') + "</td>"
+        + "</tr>");
+    // Add the content XML as text
+    row.find("pre").text(formatXml(content));
+    $("#incoming").prepend(row);
 
     // Increase the number of shown messages
     noOfMessages++;
+    updateMessageCount();
 }
 
 /**
@@ -133,7 +128,11 @@ function showMessage(endpoint, msg) {
 $(() => {
     $( "#connect" ).click(() => { connect(); });
     $( "#disconnect" ).click(() => { disconnect(); });
+    $( "#clear" ).click(() => { clearMessages(); });
     $("form").on('submit', (e) => {
         e.preventDefault();
     });
+
+    // Start from a clean, disconnected state
+    setConnected(false);
 });
